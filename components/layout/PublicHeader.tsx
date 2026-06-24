@@ -25,12 +25,12 @@ export function PublicHeader({ settings }: Props) {
             />
             <div>
               <p className="text-lg font-bold leading-tight text-primary sm:text-xl">{settings.templeName}</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">{settings.templeDescription || "Donations & Seva Management"}</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">{settings.templeDescription || "Seva Booking & Management"}</p>
             </div>
           </div>
         </Link>
         <Button asChild className="w-full sm:w-auto">
-          <Link href="/donate">Donate Now</Link>
+          <Link href="/donate">Book Seva</Link>
         </Button>
       </div>
     </header>

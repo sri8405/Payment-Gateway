@@ -5,6 +5,7 @@ import { adminRepository } from "@/lib/db/repositories/adminRepository";
 import { loginSchema } from "@/lib/validations/auth";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/admin/login"
@@ -44,19 +45,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log("[next-auth][jwt] incoming token:", token, "user:", user);
+
       if (user) {
-        token.role = "ADMIN";
+        token.role = typeof user.role === "string" ? user.role.toUpperCase() : "ADMIN";
         token.adminId = user.id;
       }
+
+      console.log("[next-auth][jwt] outgoing token:", token);
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.role = token.role as "ADMIN";
-        if (token.adminId) {
-          session.user.id = token.adminId;
-        }
+      console.log("[next-auth][session] before:", session, "token:", token);
+      const role = typeof token.role === "string" ? token.role.toUpperCase() : undefined;
+
+      if (!session.user) {
+        session.user = {} as typeof session.user;
       }
+
+      session.user.role = role;
+      if (token.adminId) {
+        session.user.id = token.adminId;
+      }
+
+      console.log("[next-auth][session] after:", session);
       return session;
     }
   }

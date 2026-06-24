@@ -18,19 +18,18 @@ export function LoginForm() {
     setLoading(true);
     const formData = new FormData(event.currentTarget);
     const result = await signIn("credentials", {
-      username: formData.get("username"),
-      password: formData.get("password"),
-      redirect: false
+      username: String(formData.get("username") ?? ""),
+      password: String(formData.get("password") ?? ""),
+      redirect: true,
+      callbackUrl: "/admin/dashboard"
     });
     setLoading(false);
 
+    console.log("[login] signIn result:", result);
+
     if (result?.error) {
       setError("Invalid credentials");
-      return;
     }
-
-    router.push("/admin/dashboard");
-    router.refresh();
   }
 
   return (

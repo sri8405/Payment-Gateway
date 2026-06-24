@@ -27,11 +27,11 @@ export default async function AcknowledgementPage({ searchParams }: Props) {
       <section className="mx-auto max-w-2xl px-4 py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Donation Acknowledgement</CardTitle>
+            <CardTitle>Seva Booking Acknowledgement</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <dl className="grid gap-3 sm:grid-cols-2">
-              <Info label="Donation ID" value={donation.donationId} />
+              <Info label="Seva Booking ID" value={donation.donationId} />
               <Info label="Date" value={new Date(donation.createdAt).toLocaleString()} />
               <Info label="Name" value={donation.name} />
               <Info label="Gothra" value={donation.gothra} />

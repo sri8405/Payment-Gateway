@@ -32,10 +32,10 @@ export function ReceiptDownload({ donation, settings }: Props) {
     doc.text(settings.templeName, pageWidth / 2, 68, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text(settings.templeDescription || "Donations & Seva Management", pageWidth / 2, 76, { align: "center" });
+    doc.text(settings.templeDescription || "Seva Booking & Management", pageWidth / 2, 76, { align: "center" });
 
     const rows = [
-      ["Donation ID", donation.donationId],
+      ["Seva Booking ID", donation.donationId],
       ["Date", new Date(donation.createdAt).toLocaleString()],
       ["Name", donation.name],
       ["Gothra", donation.gothra],

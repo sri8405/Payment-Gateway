@@ -47,12 +47,12 @@ async function main() {
       {},
       {
         templeName: "Sri Padmananda Guruji Ashrama",
-        templeDescription: "Donations & Seva Management",
+        templeDescription: "Seva Booking & Management",
         upiId: "9880742348@ybl",
         upiDisplayName: "Sri Padmananda Guruji Ashrama",
         contactNumber: "9880742348",
-        email: "",
-        address: "",
+        email: "padmanandaguruji@gmail.com",
+        address: "Malleshwaram West, Bangalore, Karnataka, India",
         logoUrl: "",
         receiptFooter: "This is an acknowledgement, not a payment confirmation"
       },

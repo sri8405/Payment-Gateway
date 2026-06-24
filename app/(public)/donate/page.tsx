@@ -22,7 +22,7 @@ export default async function DonatePage() {
       <section className="mx-auto max-w-3xl px-4 py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Donation Details</CardTitle>
+            <CardTitle>Seva Booking Details</CardTitle>
           </CardHeader>
           <CardContent>
             <DonationForm sevas={sevas} />

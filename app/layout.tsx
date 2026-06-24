@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Temple Donation Management",
-  description: "Donations and seva management system"
+  title: "Temple Seva Booking Management",
+  description: "Seva booking and management system"
 };
 
 export default function RootLayout({

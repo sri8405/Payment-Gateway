@@ -117,7 +117,7 @@ export function PaymentSection({
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
-                  alt={`UPI QR code for donation ${donationId}`}
+                  alt={`UPI QR code for seva booking ${donationId}`}
                   className="h-64 w-64"
                 />
               ) : (

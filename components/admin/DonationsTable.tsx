@@ -89,7 +89,7 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "donations.csv";
+    link.download = "seva-bookings.csv";
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -107,7 +107,7 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
         }}
       />
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{loading ? "Loading..." : `${total} donations`}</p>
+        <p className="text-sm text-muted-foreground">{loading ? "Loading..." : `${total} seva bookings`}</p>
         <Button variant="outline" onClick={exportCsv}>
           <Download className="h-4 w-4" />
           Export CSV
@@ -117,7 +117,7 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
         <Table>
           <thead>
             <tr>
-              <Th>Donation ID</Th>
+              <Th>Seva Booking ID</Th>
               <Th>Name</Th>
               <Th>Gothra</Th>
               <Th>Seva</Th>
@@ -150,7 +150,7 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
                       <Pencil className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button asChild variant="ghost" size="icon" aria-label="View donation">
+                    <Button asChild variant="ghost" size="icon" aria-label="View seva booking">
                       <Link href={`/admin/donations/${donation.donationId}`}><Eye className="h-4 w-4" /></Link>
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => toggleStatus(donation)}>

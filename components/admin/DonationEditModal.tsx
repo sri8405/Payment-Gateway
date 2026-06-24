@@ -70,7 +70,7 @@ export function DonationEditModal({ open, donation, sevas, onOpenChange, onSaved
       onSaved(data.donation);
       onOpenChange(false);
     } else {
-      setMessage(data.error || "Failed to save donation");
+      setMessage(data.error || "Failed to save seva booking");
     }
   }
 
@@ -80,7 +80,7 @@ export function DonationEditModal({ open, donation, sevas, onOpenChange, onSaved
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Donation</DialogTitle>
+          <DialogTitle>Edit Seva Booking</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {message ? <p className="rounded-md border bg-muted p-3 text-sm">{message}</p> : null}

@@ -7,7 +7,7 @@ import { HandCoins, LayoutDashboard, ListChecks, Menu, Settings2, X } from "luci
 
 const items = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/donations", label: "Donations", icon: HandCoins },
+  { href: "/admin/donations", label: "Seva Bookings", icon: HandCoins },
   { href: "/admin/sevas", label: "Sevas", icon: ListChecks },
   { href: "/admin/settings", label: "Settings", icon: Settings2 }
 ];
@@ -95,7 +95,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
       />
       <div className="min-w-0">
         <p className="truncate font-bold text-primary">Temple Admin</p>
-        <p className="truncate text-sm text-muted-foreground">Donation Management</p>
+        <p className="truncate text-sm text-muted-foreground">Seva Booking Management</p>
       </div>
     </div>
   );

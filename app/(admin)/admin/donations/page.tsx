@@ -15,8 +15,8 @@ export default async function AdminDonationsPage() {
     <AdminShell>
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Donations</h1>
-        <p className="text-sm text-muted-foreground">Search, verify, export, and review donation records</p>
+        <h1 className="text-2xl font-bold">Seva Bookings</h1>
+        <p className="text-sm text-muted-foreground">Search, verify, export, and review seva booking records</p>
       </div>
       <DonationsTable initialRows={donations.rows} initialTotal={donations.total} sevas={sevas} />
     </div>

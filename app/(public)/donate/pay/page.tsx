@@ -48,7 +48,7 @@ export default async function PayPage({ searchParams }: Props) {
           </CardHeader>
           <CardContent className="space-y-5">
             <dl className="grid grid-cols-2 gap-3 text-sm">
-              <dt className="text-muted-foreground">Donation ID</dt>
+              <dt className="text-muted-foreground">Seva Booking ID</dt>
               <dd className="font-medium">{donation.donationId}</dd>
               <dt className="text-muted-foreground">Name</dt>
               <dd className="font-medium">{donation.name}</dd>

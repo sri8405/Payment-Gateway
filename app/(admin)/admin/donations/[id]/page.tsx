@@ -16,7 +16,7 @@ export default async function DonationDetailPage({ params }: Props) {
   if (!donation) notFound();
 
   const fields = [
-    ["Donation ID", donation.donationId],
+    ["Seva Booking ID", donation.donationId],
     ["Date", new Date(donation.createdAt).toLocaleString()],
     ["Name", donation.name],
     ["Gothra", donation.gothra],
@@ -29,7 +29,7 @@ export default async function DonationDetailPage({ params }: Props) {
   return (
     <AdminShell>
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Donation Details</h1>
+      <h1 className="text-2xl font-bold">Seva Booking Details</h1>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between gap-3">

@@ -57,7 +57,7 @@ export const templeSettingsRepository = {
     return {
       _id: "default",
       templeName,
-      templeDescription: "Donations & Seva Management",
+      templeDescription: "Seva Booking & Management",
       upiId: "9880742348@ybl",
       upiDisplayName: templeName,
       contactNumber: "",

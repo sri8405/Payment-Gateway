@@ -41,7 +41,7 @@ export function DonationForm({ sevas }: Props) {
     const data = await response.json();
 
     if (!response.ok) {
-      setError(data.error || "Unable to create donation");
+      setError(data.error || "Unable to create seva booking");
       return;
     }
 
