@@ -11,8 +11,7 @@ export class UPIPaymentService implements PaymentService {
       pa: params.upiId,
       pn: params.upiDisplayName,
       am: String(params.amount),
-      cu: "INR",
-      tn: params.donationId
+      cu: "INR"
     });
 
     return {

@@ -53,24 +53,22 @@ const UPI_APPS: UpiApp[] = [
   },
 ];
 
-function buildGenericUpiUrl(upiId: string, amount: number, donationId: string, displayName: string): string {
+function buildGenericUpiUrl(upiId: string, amount: number, displayName: string): string {
   const query = new URLSearchParams({
     pa: upiId,
     pn: displayName,
     am: String(amount),
-    cu: "INR",
-    tn: donationId,
+    cu: "INR"
   });
   return `upi://pay?${query.toString()}`;
 }
 
-function buildAppIntentUrl(app: UpiApp, upiId: string, amount: number, donationId: string, displayName: string): string {
+function buildAppIntentUrl(app: UpiApp, upiId: string, amount: number, displayName: string): string {
   const query = new URLSearchParams({
     pa: upiId,
     pn: displayName,
     am: String(amount),
-    cu: "INR",
-    tn: donationId,
+    cu: "INR"
   });
 
   // Android intent URL that tries the specific app first, then falls back to generic UPI
@@ -179,10 +177,10 @@ export function PaymentSection({
     setLaunchingApp(app.name);
 
     // Build the app-specific Android intent URL
-    const intentUrl = buildAppIntentUrl(app, upiId, amount, donationId, name);
+    const intentUrl = buildAppIntentUrl(app, upiId, amount, name);
 
     // Build generic UPI fallback
-    const fallbackUrl = buildGenericUpiUrl(upiId, amount, donationId, name);
+    const fallbackUrl = buildGenericUpiUrl(upiId, amount, name);
 
     // Try the app-specific intent first
     window.location.href = intentUrl;
@@ -209,7 +207,7 @@ export function PaymentSection({
       setLaunchingApp(null);
       document.removeEventListener("visibilitychange", handleVisibility);
     }, 5000);
-  }, [upiId, amount, donationId, name]);
+  }, [upiId, amount, name]);
 
   return (
     <div className="space-y-4">
