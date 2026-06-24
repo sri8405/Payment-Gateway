@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Payment-Gateway
 
 Payment-Gateway is a production-oriented Temple Donation Management System built with Next.js, TypeScript, Tailwind CSS, NextAuth, and MongoDB Atlas. It supports public donation flows, UPI payment handoff, QR-code based desktop payment, admin management, seva configuration, donation tracking, and PDF receipt generation.
@@ -161,4 +162,3 @@ Before production deployment, configure MongoDB Atlas network access, environmen
 - Add payment verification integrations
 - Add role-based admin permissions
 - Add backup and restore operational playbooks
-
