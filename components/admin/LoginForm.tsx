@@ -20,7 +20,7 @@ export function LoginForm() {
     const result = await signIn("credentials", {
       username: String(formData.get("username") ?? ""),
       password: String(formData.get("password") ?? ""),
-      redirect: true,
+      redirect: false,
       callbackUrl: "/admin/dashboard"
     });
     setLoading(false);
@@ -29,6 +29,8 @@ export function LoginForm() {
 
     if (result?.error) {
       setError("Invalid credentials");
+    } else if (result?.ok && result?.url) {
+      router.push(result.url);
     }
   }
 
