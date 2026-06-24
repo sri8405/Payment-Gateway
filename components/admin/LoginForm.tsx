@@ -21,16 +21,18 @@ export function LoginForm() {
       username: String(formData.get("username") ?? ""),
       password: String(formData.get("password") ?? ""),
       redirect: false,
-      callbackUrl: "/admin/dashboard"
     });
-    setLoading(false);
 
-    console.log("[login] signIn result:", result);
+    console.log("signIn result", result);
 
     if (result?.error) {
+      setLoading(false);
       setError("Invalid credentials");
-    } else if (result?.ok && result?.url) {
-      router.push(result.url);
+    } else if (result?.ok) {
+      router.push("/admin/dashboard");
+      router.refresh();
+    } else {
+      setLoading(false);
     }
   }
 
