@@ -1,0 +1,14 @@
+[
+  { "name": "feature", "color": "0E8A16", "description": "New product capability" },
+  { "name": "bug", "color": "D73A4A", "description": "Reproducible defect" },
+  { "name": "enhancement", "color": "A2EEEF", "description": "Improvement to existing behavior" },
+  { "name": "documentation", "color": "0075CA", "description": "Documentation-only change" },
+  { "name": "security", "color": "B60205", "description": "Security-sensitive work" },
+  { "name": "performance", "color": "FBCA04", "description": "Speed, build, or runtime improvement" },
+  { "name": "ui", "color": "C5DEF5", "description": "User interface work" },
+  { "name": "backend", "color": "5319E7", "description": "Server, API, auth, or business logic" },
+  { "name": "database", "color": "006B75", "description": "MongoDB, schema, or persistence work" },
+  { "name": "high-priority", "color": "B60205", "description": "Urgent or release-blocking" },
+  { "name": "low-priority", "color": "D4C5F9", "description": "Nice-to-have" }
+]
+
