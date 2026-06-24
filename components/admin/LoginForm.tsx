@@ -16,22 +16,30 @@ export function LoginForm() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    const formData = new FormData(event.currentTarget);
-    const result = await signIn("credentials", {
-      username: String(formData.get("username") ?? ""),
-      password: String(formData.get("password") ?? ""),
-      redirect: false,
-    });
 
-    console.log("signIn result", result);
+    try {
+      const formData = new FormData(event.currentTarget);
+      const result = await signIn("credentials", {
+        username: String(formData.get("username") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        redirect: false
+      });
 
-    if (result?.error) {
-      setLoading(false);
-      setError("Invalid credentials");
-    } else if (result?.ok) {
-      router.push("/admin/dashboard");
-      router.refresh();
-    } else {
+      console.log("[login] signIn result:", result);
+
+      if (result?.error) {
+        console.warn("[login] signIn error:", result.error);
+        setError("Invalid credentials");
+        setLoading(false);
+      } else if (result?.ok) {
+        console.log("[login] authentication successful, redirecting to dashboard");
+        // Keep loading=true while we navigate; do NOT call setLoading(false) here.
+        // Router.push will update the page, so loading state doesn't matter after this.
+        router.push("/admin/dashboard");
+      }
+    } catch (err) {
+      console.error("[login] exception:", err);
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
