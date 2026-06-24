@@ -61,6 +61,8 @@ export default async function PayPage({ searchParams }: Props) {
               paymentUrl={payment.paymentUrl}
               upiId={paymentUpiId}
               amount={donation.amount}
+              name={donation.name}
+              sevaName={donation.sevaName}
               donationId={donation.donationId}
               initialDeviceType={initialDeviceType}
             />
