@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Eye, Pencil } from "lucide-react";
+import { Download, Eye, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, Td, Th } from "@/components/ui/table";
 import { DonationFilters, type DonationFilterState } from "@/components/admin/DonationFilters";
 import { DonationEditModal } from "@/components/admin/DonationEditModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { serializeCsv } from "@/lib/utils/csv";
 import type { DonationPlain } from "@/lib/db/repositories/donationRepository";
 import type { SevaPlain } from "@/lib/db/repositories/sevaRepository";
@@ -28,6 +29,10 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
   const [loading, setLoading] = useState(false);
   const [editingDonation, setEditingDonation] = useState<DonationPlain | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DonationPlain | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
@@ -68,6 +73,40 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
 
   function upsertDonation(saved: DonationPlain) {
     setRows((current) => current.map((row) => (row.donationId === saved.donationId ? saved : row)));
+  }
+
+  function showToast(text: string, type: "success" | "error") {
+    setToastMessage({ text, type });
+    window.setTimeout(() => setToastMessage(null), 3000);
+  }
+
+  function confirmDelete(donation: DonationPlain) {
+    setDeleteTarget(donation);
+    setDeleteConfirmOpen(true);
+  }
+
+  async function deleteDonation() {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.donationId);
+    setDeleteConfirmOpen(false);
+    try {
+      const response = await fetch(`/api/admin/donations/${deleteTarget._id}`, {
+        method: "DELETE"
+      });
+      if (response.ok) {
+        setRows((current) => current.filter((row) => row.donationId !== deleteTarget.donationId));
+        setTotal((current) => current - 1);
+        showToast("Booking deleted successfully.", "success");
+      } else {
+        const data = await response.json().catch(() => ({}));
+        showToast(data.error || "Failed to delete booking.", "error");
+      }
+    } catch {
+      showToast("Failed to delete booking.", "error");
+    } finally {
+      setDeletingId(null);
+      setDeleteTarget(null);
+    }
   }
 
   function exportCsv() {
@@ -153,6 +192,19 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
                     <Button asChild variant="ghost" size="icon" aria-label="View seva booking">
                       <Link href={`/admin/donations/${donation.donationId}`}><Eye className="h-4 w-4" /></Link>
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete seva booking"
+                      disabled={deletingId === donation.donationId}
+                      onClick={() => confirmDelete(donation)}
+                    >
+                      {deletingId === donation.donationId ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      )}
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => toggleStatus(donation)}>
                       {donation.status === "VERIFIED" ? "Mark Pending" : "Mark Verified"}
                     </Button>
@@ -175,6 +227,29 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
         onOpenChange={setEditOpen}
         onSaved={upsertDonation}
       />
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Booking?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to permanently delete this seva booking? This action cannot be undone.
+          </p>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={deleteDonation}>Delete</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {toastMessage && (
+        <div
+          className={`fixed bottom-4 right-4 z-50 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg transition-all ${
+            toastMessage.type === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+        >
+          {toastMessage.text}
+        </div>
+      )}
     </div>
   );
 }

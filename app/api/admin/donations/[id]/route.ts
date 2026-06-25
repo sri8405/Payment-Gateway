@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { Types } from "mongoose";
 import { auth } from "@/lib/auth";
 import { auditLogRepository } from "@/lib/db/repositories/auditLogRepository";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
@@ -79,18 +80,30 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       throw new AppError("BAD_REQUEST", "Missing donation id");
     }
 
+    if (!Types.ObjectId.isValid(id)) {
+      throw new AppError("BAD_REQUEST", "Invalid donation id");
+    }
+
+    const before = await donationRepository.findById(id);
+    if (!before) {
+      throw new AppError("NOT_FOUND", "Donation not found");
+    }
+
     const deleted = await donationRepository.deleteById(id);
+    if (!deleted) {
+      throw new AppError("NOT_FOUND", "Donation not found");
+    }
 
     await auditLogRepository.create({
       adminId,
       action: "DELETE",
       collection: "Donation",
-      recordId: deleted.donationId,
-      oldValues: deleted,
+      recordId: before.donationId,
+      oldValues: before,
       newValues: null
     });
 
-    return Response.json({ donation: deleted });
+    return Response.json({ donation: before });
   } catch (error) {
     return apiErrorResponse(error);
   }

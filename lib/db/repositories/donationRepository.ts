@@ -228,5 +228,23 @@ export const donationRepository = {
     } catch (error) {
       throw new AppError("DATABASE_ERROR", "Failed to calculate donation stats");
     }
+  },
+
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      await connectToDatabase();
+
+      if (!Types.ObjectId.isValid(id)) {
+        return false;
+      }
+
+      const result = await Donation.deleteOne({ _id: new Types.ObjectId(id) });
+      return result.deletedCount === 1;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("DATABASE_ERROR", "Failed to delete donation");
+    }
   }
 };

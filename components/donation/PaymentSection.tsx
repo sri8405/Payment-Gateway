@@ -53,26 +53,22 @@ const UPI_APPS: UpiApp[] = [
   },
 ];
 
-function buildGenericUpiUrl(upiId: string, amount: number, displayName: string): string {
-  const query = new URLSearchParams({
-    pa: upiId,
-    pn: displayName,
-    am: String(amount),
-    cu: "INR"
-  });
-  return `upi://pay?${query.toString()}`;
+/**
+ * Build a standards-compliant UPI URL without URLSearchParams.
+ * URLSearchParams encodes @ as %40 and spaces as +, which PhonePe
+ * and some UPI apps reject as a security issue.
+ */
+function buildUpiUrl(upiId: string, amount: number, displayName: string): string {
+  const safeName = displayName.replace(/[^a-zA-Z0-9 ]/g, "").trim();
+  const encodedName = safeName.replace(/ /g, "%20");
+  return `upi://pay?pa=${upiId}&pn=${encodedName}&am=${amount}&cu=INR&tn=Seva`;
 }
 
 function buildAppIntentUrl(app: UpiApp, upiId: string, amount: number, displayName: string): string {
-  const query = new URLSearchParams({
-    pa: upiId,
-    pn: displayName,
-    am: String(amount),
-    cu: "INR"
-  });
-
-  // Android intent URL that tries the specific app first, then falls back to generic UPI
-  return `intent://pay?${query.toString()}#Intent;scheme=upi;package=${app.packageName};end`;
+  const safeName = displayName.replace(/[^a-zA-Z0-9 ]/g, "").trim();
+  const encodedName = safeName.replace(/ /g, "%20");
+  const params = `pa=${upiId}&pn=${encodedName}&am=${amount}&cu=INR&tn=Seva`;
+  return `intent://pay?${params}#Intent;scheme=upi;package=${app.packageName};end`;
 }
 
 function AppIcon({ app }: { app: UpiApp }) {
@@ -180,7 +176,7 @@ export function PaymentSection({
     const intentUrl = buildAppIntentUrl(app, upiId, amount, name);
 
     // Build generic UPI fallback
-    const fallbackUrl = buildGenericUpiUrl(upiId, amount, name);
+    const fallbackUrl = buildUpiUrl(upiId, amount, name);
 
     // Try the app-specific intent first
     window.location.href = intentUrl;
@@ -279,6 +275,28 @@ export function PaymentSection({
               </button>
             ))}
           </div>
+
+          {/* Generic UPI button */}
+          <button
+            id="upi-pay-generic"
+            onClick={() => {
+              setLaunchingApp("UPI");
+              window.location.href = buildUpiUrl(upiId, amount, name);
+              window.setTimeout(() => setLaunchingApp(null), 5000);
+            }}
+            disabled={launchingApp !== null}
+            className="flex w-full items-center gap-3 rounded-lg bg-gray-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-gray-800 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white/20 shadow-inner">
+              <Smartphone className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-left">
+              {launchingApp === "UPI" ? "Opening UPI..." : "Pay with any UPI App"}
+            </span>
+            <svg className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
 
           {/* Fallback UPI ID section */}
           <div className="rounded-md border bg-background p-3 text-sm">
