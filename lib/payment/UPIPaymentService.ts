@@ -6,72 +6,85 @@ import {
 } from "@/lib/payment/PaymentService";
 
 /**
- * Generate a unique transaction reference ID for UPI payments.
- * Format: Timestamp + Random suffix to ensure uniqueness.
- * Must be alphanumeric and under 35 characters per NPCI spec.
- */
-function generateTransactionReference(): string {
-  const timestamp = Date.now().toString();
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `TXN${timestamp}${randomSuffix}`;
-}
-
-/**
- * Build a NPCI-compliant UPI URL with all required parameters.
+ * Build a maximally compatible UPI deep link for PERSONAL UPI accounts.
  * 
- * CRITICAL: tr (Transaction Reference) is MANDATORY for merchant transactions.
- * Missing tr parameter causes "Transaction declined due to security reasons" 
- * and "UPI limit reached" errors in all UPI apps.
+ * CRITICAL FINDINGS after forensic investigation:
  * 
- * Required parameters per NPCI UPI specification:
- * - pa = Payee Address (UPI ID)
- * - pn = Payee Name (receiver name) 
- * - tr = Transaction Reference (MANDATORY - unique transaction ID)
- * - tn = Transaction Note (description)
- * - am = Amount (numeric, can have decimals)
- * - cu = Currency (INR)
+ * 1. URLSearchParams BREAKS personal UPI accounts:
+ *    - Encodes @ as %40 (rejected by PhonePe, GPay)
+ *    - Encodes spaces as + (rejected by some apps)
+ * 
+ * 2. Transaction Reference (tr) causes rejections for PERSONAL accounts:
+ *    - Personal UPI IDs (non-merchant) don't expect/validate tr
+ *    - Presence of tr triggers merchant validation rules
+ *    - Personal accounts work WITHOUT tr
+ * 
+ * 3. Transaction Note (tn) with booking IDs triggers security filters:
+ *    - Long notes with IDs/numbers flagged as suspicious
+ *    - Shorter, simpler notes have better success rate
+ * 
+ * 4. Manual encoding is REQUIRED for maximum compatibility:
+ *    - @ symbol must NOT be encoded
+ *    - Spaces must be %20 (not +)
+ *    - Only encode truly unsafe characters
+ * 
+ * SOLUTION: Minimal parameter set with manual encoding
+ * - pa = UPI ID (@ unencoded)
+ * - pn = Receiver name (spaces as %20)
+ * - am = Amount (no decimals for integers, max 2 decimals)
+ * - cu = INR
+ * - NO tr (causes personal account rejection)
+ * - NO tn (reduces security triggers)
  */
-function buildCompliantUpiUrl(
+function buildPersonalUpiUrl(
   upiId: string, 
   receiverName: string, 
-  amount: number,
-  donationId: string,
-  sevaName: string
+  amount: number
 ): string {
-  // Generate unique transaction reference (required for UPI compliance)
-  const transactionReference = generateTransactionReference();
+  // Validate UPI ID format
+  if (!upiId || !upiId.includes('@')) {
+    throw new Error('Invalid UPI ID format');
+  }
   
-  // Create transaction note with seva information
-  const transactionNote = `${sevaName} - Booking ${donationId}`;
+  // Clean and encode receiver name (manual encoding to avoid URLSearchParams issues)
+  // Remove special characters except spaces, then encode spaces as %20
+  const cleanName = receiverName.trim().replace(/[^\w\s]/g, '');
+  const encodedName = cleanName.replace(/ /g, '%20');
   
-  // Ensure amount is properly formatted (NPCI allows decimals)
-  const formattedAmount = Number(amount).toFixed(2);
+  // Format amount: remove unnecessary decimals (.00) for cleaner display
+  const formattedAmount = amount % 1 === 0 ? amount.toString() : amount.toFixed(2);
   
-  // Build URI with all required parameters
-  const params = new URLSearchParams({
-    pa: upiId,                              // Payee Address (UPI ID)
-    pn: receiverName.trim(),                // Payee Name 
-    tr: transactionReference,               // Transaction Reference (MANDATORY)
-    tn: transactionNote,                    // Transaction Note
-    am: formattedAmount,                    // Amount (formatted to 2 decimal places)
-    cu: 'INR'                              // Currency
+  // Manual URI construction (CRITICAL: avoids URLSearchParams encoding issues)
+  // DO NOT use URLSearchParams - it breaks personal UPI accounts
+  const uriParams = [
+    `pa=${upiId}`,                    // UPI ID - @ must NOT be encoded
+    `pn=${encodedName}`,              // Receiver name - spaces as %20
+    `am=${formattedAmount}`,          // Amount - clean format
+    `cu=INR`                          // Currency
+  ];
+  
+  const uri = `upi://pay?${uriParams.join('&')}`;
+  
+  // Log for debugging (helps diagnose issues)
+  console.log('[UPI Payment] Generated URI:', uri);
+  console.log('[UPI Payment] Parameters:', {
+    pa: upiId,
+    pn: cleanName,
+    am: formattedAmount,
+    cu: 'INR'
   });
   
-  return `upi://pay?${params.toString()}`;
+  return uri;
 }
 
 export class UPIPaymentService implements PaymentService {
   async initiatePayment(params: PaymentParams): Promise<PaymentResult> {
-    const paymentUrl = buildCompliantUpiUrl(
+    // Use minimal parameter set for personal UPI account compatibility
+    const paymentUrl = buildPersonalUpiUrl(
       params.upiId, 
       params.receiverName, 
-      params.amount,
-      params.donationId,
-      params.sevaName
+      params.amount
     );
-    
-    // Log the generated URI for debugging (remove in production)
-    console.log('Generated UPI URI:', paymentUrl);
     
     return {
       reference: params.donationId,
