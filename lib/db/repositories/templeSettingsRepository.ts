@@ -2,12 +2,18 @@ import { connectToDatabase } from "@/lib/db/connect";
 import { TempleSettings } from "@/lib/db/models/TempleSettings";
 import { AppError } from "@/lib/utils/errors";
 
+export type DefaultPaymentApp = "generic" | "phonepe" | "gpay" | "paytm";
+
 export type TempleSettingsPlain = {
   _id: string;
   templeName: string;
   templeDescription?: string;
   upiId: string;
   upiDisplayName: string;
+  /** Account holder / receiver name shown on the payment screen */
+  receiverName?: string;
+  /** Preferred default payment app */
+  defaultPaymentApp?: DefaultPaymentApp;
   contactNumber?: string;
   email?: string;
   address?: string;
@@ -23,6 +29,8 @@ function plainTempleSettings(doc: any): TempleSettingsPlain {
     templeDescription: doc.templeDescription,
     upiId: doc.upiId,
     upiDisplayName: doc.upiDisplayName,
+    receiverName: doc.receiverName,
+    defaultPaymentApp: doc.defaultPaymentApp ?? "generic",
     contactNumber: doc.contactNumber,
     email: doc.email,
     address: doc.address,
@@ -54,12 +62,19 @@ export const templeSettingsRepository = {
     }
 
     const templeName = process.env.NEXT_PUBLIC_TEMPLE_NAME || "Sri Padmananda Guruji Ashrama";
+    // Fallback UPI values — these are used only when no settings exist in the database yet.
+    // Set FALLBACK_UPI_ID and FALLBACK_UPI_DISPLAY_NAME in your environment variables or
+    // save settings from the Admin Settings page to persist them to the database.
+    const fallbackUpiId = process.env.FALLBACK_UPI_ID || "9880742348@ybl";
+    const fallbackUpiDisplayName = process.env.FALLBACK_UPI_DISPLAY_NAME || templeName;
     return {
       _id: "default",
       templeName,
       templeDescription: "Seva Booking & Management",
-      upiId: "9880742348@ybl",
-      upiDisplayName: templeName,
+      upiId: fallbackUpiId,
+      upiDisplayName: fallbackUpiDisplayName,
+      receiverName: templeName,
+      defaultPaymentApp: "generic" as DefaultPaymentApp,
       contactNumber: "",
       email: "",
       address: "",

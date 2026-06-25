@@ -50,6 +50,8 @@ async function main() {
         templeDescription: "Seva Booking & Management",
         upiId: "9880742348@ybl",
         upiDisplayName: "Sri Padmananda Guruji Ashrama",
+        receiverName: "Sri Padmananda Guruji Ashrama",
+        defaultPaymentApp: "generic",
         contactNumber: "9880742348",
         email: "padmanandaguruji@gmail.com",
         address: "Malleshwaram West, Bangalore, Karnataka, India",

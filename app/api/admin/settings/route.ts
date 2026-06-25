@@ -38,6 +38,8 @@ export async function PUT(request: Request) {
       templeDescription: parsed.data.templeDescription || undefined,
       upiId: parsed.data.upiId,
       upiDisplayName: parsed.data.upiDisplayName,
+      receiverName: parsed.data.receiverName,
+      defaultPaymentApp: parsed.data.defaultPaymentApp,
       contactNumber: parsed.data.contactNumber || undefined,
       email: parsed.data.email || undefined,
       address: parsed.data.address || undefined,

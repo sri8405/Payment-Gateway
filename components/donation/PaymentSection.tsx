@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 type Props = {
   paymentUrl: string;
   upiId: string;
+  /** Human-readable account holder / receiver name */
+  receiverName?: string;
   amount: number;
   name: string;
   sevaName: string;
@@ -109,6 +111,7 @@ function AppIcon({ app }: { app: UpiApp }) {
 export function PaymentSection({
   paymentUrl,
   upiId,
+  receiverName,
   amount,
   name,
   sevaName,
@@ -230,6 +233,12 @@ export function PaymentSection({
             <dt className="text-muted-foreground">UPI ID</dt>
             <dd className="mt-1 font-medium">{upiId}</dd>
           </div>
+          {receiverName ? (
+            <div>
+              <dt className="text-muted-foreground">Receiver</dt>
+              <dd className="mt-1 font-medium">{receiverName}</dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-muted-foreground">Payment Type</dt>
             <dd className="mt-1 font-medium">UPI</dd>

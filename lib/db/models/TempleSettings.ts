@@ -6,6 +6,14 @@ const templeSettingsSchema = new Schema(
     templeDescription: { type: String, trim: true },
     upiId: { type: String, required: true, trim: true },
     upiDisplayName: { type: String, required: true, trim: true },
+    /** Human-readable account holder / receiver name shown on payment screen */
+    receiverName: { type: String, trim: true },
+    /** Preferred default payment app: generic | phonepe | gpay | paytm */
+    defaultPaymentApp: {
+      type: String,
+      enum: ["generic", "phonepe", "gpay", "paytm"],
+      default: "generic"
+    },
     contactNumber: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     address: { type: String, trim: true },

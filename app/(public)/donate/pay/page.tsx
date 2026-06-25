@@ -27,8 +27,11 @@ export default async function PayPage({ searchParams }: Props) {
   donation = await donationRepository.findById(id);
 
   if (!donation) notFound();
-  const paymentUpiId = settings.upiId || "9880742348@ybl";
+  // Use receiverName (human-readable account holder) for display, fall back to upiDisplayName or templeName.
+  // upiId and upiDisplayName are always populated (either from DB or environment fallback in repository).
+  const paymentUpiId = settings.upiId;
   const paymentUpiName = settings.upiDisplayName || settings.templeName;
+  const paymentReceiverName = settings.receiverName || settings.upiDisplayName || settings.templeName;
   const payment = await paymentService.initiatePayment({
     donationId: donation.donationId,
     amount: donation.amount,
@@ -60,6 +63,7 @@ export default async function PayPage({ searchParams }: Props) {
             <PaymentSection
               paymentUrl={payment.paymentUrl}
               upiId={paymentUpiId}
+              receiverName={paymentReceiverName}
               amount={donation.amount}
               name={donation.name}
               sevaName={donation.sevaName}
