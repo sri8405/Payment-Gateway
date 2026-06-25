@@ -63,10 +63,21 @@ function buildPersonalUpiUrl(
     `cu=INR`                          // Currency
   ];
   
-  const uri = `upi://pay?${uriParams.join('&')}`;
+  const upiParams = uriParams.join('&');
+  
+  // CRITICAL FIX: Use intent:// scheme for Android (95% of Indian users)
+  // upi:// from browser is treated as untrusted origin
+  // intent:// properly invokes Android's intent system
+  const isAndroid = typeof navigator !== 'undefined' && 
+    /android/i.test(navigator.userAgent);
+  
+  const uri = isAndroid
+    ? `intent://pay?${upiParams}#Intent;scheme=upi;end`
+    : `upi://pay?${upiParams}`;
   
   // Log for debugging (helps diagnose issues)
   console.log('[UPI Payment] Generated URI:', uri);
+  console.log('[UPI Payment] Platform:', isAndroid ? 'Android (intent://)' : 'iOS/Desktop (upi://)');
   console.log('[UPI Payment] Parameters:', {
     pa: upiId,
     pn: cleanName,

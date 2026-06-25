@@ -165,14 +165,28 @@ export function PaymentSection({
   }
 
   /**
-   * Handle UPI app payment - uses the same standard UPI URI for all apps.
-   * No app-specific intent URLs for maximum compatibility.
+   * Open UPI link with trusted user gesture context.
+   * CRITICAL: window.location.href is flagged as untrusted by browsers,
+   * causing UPI apps to reject with security errors.
+   * Using anchor element click preserves the user gesture trust context.
+   */
+  function openUpiLink(url: string) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  /**
+   * Handle UPI app payment - uses trusted anchor element click.
    */
   function handleAppPayment(app: UpiApp) {
     setLaunchingApp(app.name);
 
-    // Use the same standard UPI URI for all apps
-    window.location.href = paymentUrl;
+    // Use trusted anchor element click instead of window.location.href
+    openUpiLink(paymentUrl);
 
     // Clear loading state after reasonable timeout
     window.setTimeout(() => setLaunchingApp(null), 3000);
@@ -274,7 +288,7 @@ export function PaymentSection({
             id="upi-pay-generic"
             onClick={() => {
               setLaunchingApp("UPI");
-              window.location.href = paymentUrl;
+              openUpiLink(paymentUrl);
               window.setTimeout(() => setLaunchingApp(null), 3000);
             }}
             disabled={launchingApp !== null}
