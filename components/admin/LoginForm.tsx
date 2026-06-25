@@ -11,6 +11,7 @@ export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,22 +20,62 @@ export function LoginForm() {
 
     try {
       const formData = new FormData(event.currentTarget);
-      const result = await signIn("credentials", {
-        username: String(formData.get("username") ?? ""),
-        password: String(formData.get("password") ?? ""),
-        redirect: false
-      });
+      // Attempt client helper first, but fall back to a manual credentials POST
+      let result: any = null;
+      try {
+        result = await Promise.race([
+          signIn("credentials", {
+            username: String(formData.get("username") ?? ""),
+            password: String(formData.get("password") ?? ""),
+            redirect: false
+          }),
+          // timeout after 3s so we can fallback to manual POST if signIn hangs
+          new Promise((res) => setTimeout(() => res(null), 3000))
+        ]);
+      } catch (e) {
+        console.warn("[login] signIn threw:", e);
+      }
 
       console.log("[login] signIn result:", result);
 
       if (!result) {
-        console.warn("[login] signIn returned no result");
-        setError("Sign in failed. Please try again.");
-        setLoading(false);
-        return;
+        // signIn helper didn't respond; try manual CSRF + credentials POST
+        try {
+          const csrfResp = await fetch("/api/auth/csrf");
+          const csrfJson = await csrfResp.json();
+          const csrfToken = csrfJson?.csrfToken;
+
+          const body = new URLSearchParams();
+          body.set("csrfToken", csrfToken ?? "");
+          body.set("username", String(formData.get("username") ?? ""));
+          body.set("password", String(formData.get("password") ?? ""));
+
+          const resp = await fetch("/api/auth/callback/credentials", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body.toString()
+          });
+
+          // If the credentials flow returns a redirect, follow it via location
+          if (resp.redirected) {
+            console.log("[login] manual POST redirected to", resp.url);
+          }
+
+          const text = await resp.text();
+          console.log("[login] manual POST response status", resp.status);
+          // treat 200 as success
+          if (resp.status === 200) {
+            result = { ok: true };
+          } else {
+            result = { error: "invalid" };
+          }
+        } catch (err) {
+          console.error("[login] manual sign-in failed:", err);
+          result = { error: "exception" };
+        }
       }
 
-      if (result.error) {
+      if (result?.error) {
         console.warn("[login] signIn error:", result.error);
         setError("Invalid credentials");
         setLoading(false);
@@ -70,6 +111,7 @@ export function LoginForm() {
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
+      
     </form>
   );
 }
