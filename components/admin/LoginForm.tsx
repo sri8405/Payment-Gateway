@@ -27,15 +27,29 @@ export function LoginForm() {
 
       console.log("[login] signIn result:", result);
 
-      if (result?.error) {
+      if (!result) {
+        console.warn("[login] signIn returned no result");
+        setError("Sign in failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (result.error) {
         console.warn("[login] signIn error:", result.error);
         setError("Invalid credentials");
         setLoading(false);
-      } else if (result?.ok) {
-        console.log("[login] authentication successful, redirecting to dashboard");
-        // Keep loading=true while we navigate; do NOT call setLoading(false) here.
-        // Router.push will update the page, so loading state doesn't matter after this.
-        router.push("/admin/dashboard");
+        return;
+      }
+
+      // Treat any non-error response as successful authentication.
+      console.log("[login] authentication successful, redirecting to dashboard");
+      // Use replace so history doesn't keep the login page, and refresh to update server-side state.
+      await router.replace("/admin/dashboard");
+      try {
+        router.refresh();
+      } finally {
+        // Clear loading in case navigation doesn't unmount this component immediately.
+        setLoading(false);
       }
     } catch (err) {
       console.error("[login] exception:", err);
