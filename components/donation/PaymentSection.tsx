@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import * as QRCode from "qrcode";
 import { Check, Copy, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,6 @@ type DeviceType = "mobile" | "desktop" | "unknown";
 
 type UpiApp = {
   name: string;
-  /** Package name / scheme used in the intent URL */
-  packageName: string;
   /** Brand colour for the button */
   color: string;
   /** Hover colour */
@@ -34,44 +32,29 @@ type UpiApp = {
 const UPI_APPS: UpiApp[] = [
   {
     name: "PhonePe",
-    packageName: "com.phonepe.app",
     color: "#5F259F",
     hoverColor: "#4A1D7A",
     icon: "phonepe",
   },
   {
     name: "Google Pay",
-    packageName: "com.google.android.apps.nbu.paisa.user",
     color: "#1A73E8",
     hoverColor: "#1557B0",
     icon: "gpay",
   },
   {
     name: "Paytm",
-    packageName: "net.one97.paytm",
     color: "#00BAF2",
     hoverColor: "#0098C7",
     icon: "paytm",
   },
+  {
+    name: "BHIM UPI",
+    color: "#FF6B35",
+    hoverColor: "#E5542C",
+    icon: "bhim",
+  },
 ];
-
-/**
- * Build a standards-compliant UPI URL without URLSearchParams.
- * URLSearchParams encodes @ as %40 and spaces as +, which PhonePe
- * and some UPI apps reject as a security issue.
- */
-function buildUpiUrl(upiId: string, amount: number, displayName: string): string {
-  const safeName = displayName.replace(/[^a-zA-Z0-9 ]/g, "").trim();
-  const encodedName = safeName.replace(/ /g, "%20");
-  return `upi://pay?pa=${upiId}&pn=${encodedName}&am=${amount}&cu=INR&tn=Seva`;
-}
-
-function buildAppIntentUrl(app: UpiApp, upiId: string, amount: number, displayName: string): string {
-  const safeName = displayName.replace(/[^a-zA-Z0-9 ]/g, "").trim();
-  const encodedName = safeName.replace(/ /g, "%20");
-  const params = `pa=${upiId}&pn=${encodedName}&am=${amount}&cu=INR&tn=Seva`;
-  return `intent://pay?${params}#Intent;scheme=upi;package=${app.packageName};end`;
-}
 
 function AppIcon({ app }: { app: UpiApp }) {
   if (app.icon === "phonepe") {
@@ -102,6 +85,15 @@ function AppIcon({ app }: { app: UpiApp }) {
         <path d="M14 9.5H16C17.38 9.5 18 10.12 18 11C18 11.6 17.6 12 17 12.2C17.7 12.4 18.2 12.9 18.2 13.5C18.2 14.5 17.3 15.5 15.8 15.5H14V9.5ZM15.5 11.8H15.9C16.4 11.8 16.7 11.5 16.7 11.2C16.7 10.9 16.4 10.7 15.9 10.7H15.5V11.8ZM15.5 14.3H16C16.6 14.3 16.9 14 16.9 13.6C16.9 13.2 16.6 12.9 16 12.9H15.5V14.3Z" fill="#00BAF2"/>
         <path d="M10 10.8H8.5V9.5H13V10.8H11.5V15.5H10V10.8Z" fill="#002E6E"/>
         <path d="M19 9.5H20.5V12L22 9.5V15.5H20.5V12.5L19 15.5V9.5Z" fill="#002E6E"/>
+      </svg>
+    );
+  }
+  if (app.icon === "bhim") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="24" height="24" rx="5" fill="white"/>
+        <path d="M12 2L3 7V17L12 22L21 17V7L12 2ZM12 4.5L18.5 8.5V15.5L12 19.5L5.5 15.5V8.5L12 4.5Z" fill="#FF6B35"/>
+        <path d="M8 10H10V14H8V10ZM14 10H16V14H14V10ZM10 8H14V16H10V8Z" fill="#FF6B35"/>
       </svg>
     );
   }
@@ -172,41 +164,33 @@ export function PaymentSection({
     }
   }
 
-  const handleAppPayment = useCallback((app: UpiApp) => {
+  /**
+   * Handle UPI app payment - uses the same standard UPI URI for all apps.
+   * No app-specific intent URLs for maximum compatibility.
+   */
+  function handleAppPayment(app: UpiApp) {
     setLaunchingApp(app.name);
 
-    // Build the app-specific Android intent URL
-    const intentUrl = buildAppIntentUrl(app, upiId, amount, name);
+    // Use the same standard UPI URI for all apps
+    window.location.href = paymentUrl;
 
-    // Build generic UPI fallback
-    const fallbackUrl = buildUpiUrl(upiId, amount, name);
+    // Clear loading state after reasonable timeout
+    window.setTimeout(() => setLaunchingApp(null), 3000);
 
-    // Try the app-specific intent first
-    window.location.href = intentUrl;
-
-    // If the intent doesn't trigger (app not installed), Android will do nothing.
-    // After a short delay, fall back to generic upi:// URL so the OS picker opens.
-    const timeout = window.setTimeout(() => {
-      window.location.href = fallbackUrl;
-      setLaunchingApp(null);
-    }, 1500);
-
-    // If the page becomes hidden (app launched), clear the fallback
+    // If page becomes hidden (app opened), clear loading immediately
     function handleVisibility() {
       if (document.hidden) {
-        clearTimeout(timeout);
         setLaunchingApp(null);
         document.removeEventListener("visibilitychange", handleVisibility);
       }
     }
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // Cleanup after 5 seconds regardless
+    // Cleanup listener after timeout
     window.setTimeout(() => {
-      setLaunchingApp(null);
       document.removeEventListener("visibilitychange", handleVisibility);
     }, 5000);
-  }, [upiId, amount, name]);
+  }
 
   return (
     <div className="space-y-4">
@@ -253,11 +237,11 @@ export function PaymentSection({
             Choose your preferred UPI app to complete the seva booking payment.
           </p>
 
-          {/* App-specific buttons */}
+          {/* App buttons - all use the same standard UPI URI */}
           <div className="grid gap-3">
             {UPI_APPS.map((app) => (
               <button
-                key={app.packageName}
+                key={app.name}
                 id={`upi-pay-${app.icon}`}
                 onClick={() => handleAppPayment(app)}
                 disabled={launchingApp !== null}
@@ -290,8 +274,8 @@ export function PaymentSection({
             id="upi-pay-generic"
             onClick={() => {
               setLaunchingApp("UPI");
-              window.location.href = buildUpiUrl(upiId, amount, name);
-              window.setTimeout(() => setLaunchingApp(null), 5000);
+              window.location.href = paymentUrl;
+              window.setTimeout(() => setLaunchingApp(null), 3000);
             }}
             disabled={launchingApp !== null}
             className="flex w-full items-center gap-3 rounded-lg bg-gray-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-gray-800 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"

@@ -6,27 +6,26 @@ import {
 } from "@/lib/payment/PaymentService";
 
 /**
- * Build a standards-compliant UPI URL.
- *
- * We manually construct the query string instead of using URLSearchParams
- * because URLSearchParams encodes `@` as `%40` and spaces as `+`, which
- * causes some UPI apps (notably PhonePe) to reject the transaction with
- * "Transaction declined due to security reasons."
- *
- * The UPI deep link spec expects minimal encoding: spaces as `%20`,
- * and `@` left as-is.
+ * Build a standards-compliant UPI URL for maximum compatibility.
+ * 
+ * Requirements:
+ * - pa = UPI ID (no encoding needed for @ symbol)
+ * - pn = receiver name (temple/organization name, not devotee name)
+ * - am = amount in INR
+ * - cu = INR (currency)
+ * - No additional parameters (tn, tr, tid etc.) for maximum compatibility
  */
-function buildUpiUrl(pa: string, pn: string, am: number): string {
-  const safePn = pn.replace(/[^a-zA-Z0-9 ]/g, "").trim();
-  const encodedPn = safePn.replace(/ /g, "%20");
-  return `upi://pay?pa=${pa}&pn=${encodedPn}&am=${am}&cu=INR&tn=Seva`;
+function buildStandardUpiUrl(upiId: string, receiverName: string, amount: number): string {
+  // Use encodeURIComponent for proper parameter encoding
+  const encodedReceiverName = encodeURIComponent(receiverName.trim());
+  return `upi://pay?pa=${upiId}&pn=${encodedReceiverName}&am=${amount}&cu=INR`;
 }
 
 export class UPIPaymentService implements PaymentService {
   async initiatePayment(params: PaymentParams): Promise<PaymentResult> {
     return {
       reference: params.donationId,
-      paymentUrl: buildUpiUrl(params.upiId, params.upiDisplayName, params.amount)
+      paymentUrl: buildStandardUpiUrl(params.upiId, params.receiverName, params.amount)
     };
   }
 

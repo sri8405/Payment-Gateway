@@ -38,7 +38,8 @@ export default async function PayPage({ searchParams }: Props) {
     name: donation.name,
     sevaName: donation.sevaName,
     upiId: paymentUpiId,
-    upiDisplayName: paymentUpiName
+    upiDisplayName: paymentUpiName,
+    receiverName: paymentReceiverName
   });
 
   return (

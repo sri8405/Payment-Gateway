@@ -10,6 +10,8 @@ export interface PaymentParams {
   sevaName: string;
   upiId: string;
   upiDisplayName: string;
+  /** Human-readable account holder / receiver name (temple/organization name) */
+  receiverName: string;
 }
 
 export interface PaymentResult {
