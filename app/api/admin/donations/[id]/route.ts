@@ -60,3 +60,38 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return apiErrorResponse(error);
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: Params) {
+  try {
+    const session = await auth();
+    const adminId = session?.user?.id;
+    const role = session?.user?.role;
+    if (!adminId) {
+      throw new AppError("UNAUTHORIZED", "Unauthorized");
+    }
+
+    if (role !== "ADMIN") {
+      throw new AppError("FORBIDDEN", "Forbidden");
+    }
+
+    const { id } = await params;
+    if (!id) {
+      throw new AppError("BAD_REQUEST", "Missing donation id");
+    }
+
+    const deleted = await donationRepository.deleteById(id);
+
+    await auditLogRepository.create({
+      adminId,
+      action: "DELETE",
+      collection: "Donation",
+      recordId: deleted.donationId,
+      oldValues: deleted,
+      newValues: null
+    });
+
+    return Response.json({ donation: deleted });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
