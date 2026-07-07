@@ -36,8 +36,6 @@ export function LoginForm() {
         console.warn("[login] signIn threw:", e);
       }
 
-      console.log("[login] signIn result:", result);
-
       if (!result) {
         // signIn helper didn't respond; try manual CSRF + credentials POST
         try {
@@ -56,13 +54,7 @@ export function LoginForm() {
             body: body.toString()
           });
 
-          // If the credentials flow returns a redirect, follow it via location
-          if (resp.redirected) {
-            console.log("[login] manual POST redirected to", resp.url);
-          }
-
           const text = await resp.text();
-          console.log("[login] manual POST response status", resp.status);
           // treat 200 as success
           if (resp.status === 200) {
             result = { ok: true };
@@ -83,7 +75,6 @@ export function LoginForm() {
       }
 
       // Treat any non-error response as successful authentication.
-      console.log("[login] authentication successful, redirecting to dashboard");
       // Use replace so history doesn't keep the login page, and refresh to update server-side state.
       await router.replace("/admin/dashboard");
       try {
@@ -110,7 +101,7 @@ export function LoginForm() {
         <Label htmlFor="password">Password</Label>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </div>
-      <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
+      <Button type="submit" className="w-full bg-saffron hover:bg-saffron/90 text-white" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
       
     </form>
   );

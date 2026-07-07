@@ -38,11 +38,14 @@ export function ReceiptDownload({ donation, settings }: Props) {
       ["Seva Booking ID", donation.donationId],
       ["Date", new Date(donation.createdAt).toLocaleString()],
       ["Name", donation.name],
-      ["Gothra", donation.gothra],
+      ["Gothra", donation.gothra || "-"],
+      ...(donation.nakshatra ? [["Nakshatra", donation.nakshatra]] : []),
       ["Mobile", donation.mobile || "-"],
       ["Email", donation.email || "-"],
       ["Seva", donation.sevaName],
       ["Amount", `Rs ${donation.amount}`],
+      ["Payment Method", donation.paymentMethod || "Online"],
+      ["Payment Source", donation.paymentSource || "Online"],
       ["Status", donation.status]
     ];
 

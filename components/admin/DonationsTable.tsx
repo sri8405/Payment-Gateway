@@ -22,7 +22,7 @@ type Props = {
 const pageSize = 20;
 
 export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
-  const [filters, setFilters] = useState<DonationFilterState>({ search: "", from: "", to: "", sevaId: "", status: "" });
+  const [filters, setFilters] = useState<DonationFilterState>({ search: "", from: "", to: "", sevaId: "", status: "", paymentSource: "", paymentMethod: "" });
   const [rows, setRows] = useState(initialRows);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
@@ -120,9 +120,11 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
         sevaName: row.sevaName,
         amount: row.amount,
         status: row.status,
+        paymentSource: row.paymentSource,
+        paymentMethod: row.paymentMethod,
         createdAt: new Date(row.createdAt)
       })),
-      ["donationId", "name", "gothra", "mobile", "email", "sevaName", "amount", "status", "createdAt"]
+      ["donationId", "name", "gothra", "mobile", "email", "sevaName", "amount", "status", "paymentSource", "paymentMethod", "createdAt"]
     );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -162,6 +164,7 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
               <Th>Seva</Th>
               <Th>Amount</Th>
               <Th>Date</Th>
+              <Th>Source</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
             </tr>
@@ -175,6 +178,11 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
                 <Td>{donation.sevaName}</Td>
                 <Td>Rs {donation.amount}</Td>
                 <Td>{new Date(donation.createdAt).toLocaleDateString()}</Td>
+                <Td>
+                  <Badge variant={donation.paymentSource === "Offline" ? "outline" : "default"}>
+                    {donation.paymentSource}
+                  </Badge>
+                </Td>
                 <Td><Badge variant={donation.status === "VERIFIED" ? "default" : "secondary"}>{donation.status}</Badge></Td>
                 <Td>
                   <div className="flex gap-2">

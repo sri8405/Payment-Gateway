@@ -9,6 +9,11 @@ export type SevaPlain = {
   suggestedAmount: number;
   active: boolean;
   isSystem: boolean;
+  pricingMode?: "fixed" | "custom" | "options";
+  fixedAmount?: number;
+  defaultAmount?: number;
+  category?: string;
+  imageUrl?: string;
   createdAt: Date;
 };
 
@@ -20,6 +25,11 @@ function plainSeva(doc: any): SevaPlain {
     suggestedAmount: doc.suggestedAmount,
     active: doc.active,
     isSystem: doc.isSystem,
+    pricingMode: doc.pricingMode || "fixed",
+    fixedAmount: doc.fixedAmount || doc.suggestedAmount,
+    defaultAmount: doc.defaultAmount || doc.suggestedAmount,
+    category: doc.category,
+    imageUrl: doc.imageUrl,
     createdAt: doc.createdAt
   };
 }
@@ -43,7 +53,7 @@ export const sevaRepository = {
       await connectToDatabase();
       const sevas = await Seva.find({}).sort({ isSystem: -1, name: 1 }).lean();
       return sevas.map(plainSeva);
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to list sevas");
     }
   },
@@ -53,8 +63,28 @@ export const sevaRepository = {
       await connectToDatabase();
       const sevas = await Seva.find({ active: true }).sort({ name: 1 }).lean();
       return sevas.map(plainSeva);
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to list active sevas");
+    }
+  },
+
+  async findByCategory(category: string) {
+    try {
+      await connectToDatabase();
+      const sevas = await Seva.find({ category, active: true }).sort({ name: 1 }).lean();
+      return sevas.map(plainSeva);
+    } catch {
+      throw new AppError("DATABASE_ERROR", "Failed to find sevas by category");
+    }
+  },
+
+  async getCategories() {
+    try {
+      await connectToDatabase();
+      const categories = await Seva.distinct("category", { active: true });
+      return categories.filter(Boolean).sort();
+    } catch {
+      throw new AppError("DATABASE_ERROR", "Failed to list categories");
     }
   },
 
@@ -63,12 +93,12 @@ export const sevaRepository = {
       await connectToDatabase();
       const seva = await Seva.findById(id).lean();
       return seva ? plainSeva(seva) : null;
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to find seva");
     }
   },
 
-  async update(id: string, input: Partial<Pick<SevaPlain, "name" | "description" | "suggestedAmount" | "active">>) {
+  async update(id: string, input: Partial<Omit<SevaPlain, "_id" | "createdAt">>) {
     try {
       await connectToDatabase();
       const existing = await Seva.findById(id);

@@ -19,6 +19,25 @@ export type TempleSettingsPlain = {
   address?: string;
   logoUrl?: string;
   receiptFooter?: string;
+  bannerUrl?: string;
+  websiteFooter?: string;
+  templeTimings?: string;
+  supportContact?: string;
+  socialMediaLinks?: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    twitter?: string;
+    website?: string;
+  };
+  phonepeClientId?: string;
+  phonepeClientSecret?: string;
+  phonepeClientVersion?: string;
+  phonepeMerchantId?: string;
+  phonepeRedirectUrl?: string;
+  phonepeCallbackUrl?: string;
+  audioEnabled?: boolean;
+  audioUrl?: string;
   updatedAt?: Date;
 };
 
@@ -36,6 +55,19 @@ function plainTempleSettings(doc: any): TempleSettingsPlain {
     address: doc.address,
     logoUrl: doc.logoUrl,
     receiptFooter: doc.receiptFooter,
+    bannerUrl: doc.bannerUrl,
+    websiteFooter: doc.websiteFooter,
+    templeTimings: doc.templeTimings,
+    supportContact: doc.supportContact,
+    socialMediaLinks: doc.socialMediaLinks,
+    phonepeClientId: doc.phonepeClientId,
+    phonepeClientSecret: doc.phonepeClientSecret,
+    phonepeClientVersion: doc.phonepeClientVersion,
+    phonepeMerchantId: doc.phonepeMerchantId,
+    phonepeRedirectUrl: doc.phonepeRedirectUrl,
+    phonepeCallbackUrl: doc.phonepeCallbackUrl,
+    audioEnabled: doc.audioEnabled ?? true,
+    audioUrl: doc.audioUrl || "",
     updatedAt: doc.updatedAt
   };
 }
@@ -79,7 +111,20 @@ export const templeSettingsRepository = {
       email: "",
       address: "",
       logoUrl: "/assets/guruji.jpg",
-      receiptFooter: "May Guruji's blessings always be with you."
+      receiptFooter: "May Guruji's blessings always be with you.",
+      bannerUrl: "",
+      websiteFooter: "",
+      templeTimings: "",
+      supportContact: "",
+      socialMediaLinks: {},
+      phonepeClientId: "",
+      phonepeClientSecret: "",
+      phonepeClientVersion: "",
+      phonepeMerchantId: "",
+      phonepeRedirectUrl: "",
+      phonepeCallbackUrl: "",
+      audioEnabled: true,
+      audioUrl: ""
     } satisfies TempleSettingsPlain;
   },
 

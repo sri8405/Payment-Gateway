@@ -1,38 +1,51 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import type { TempleSettingsPlain } from "@/lib/db/repositories/templeSettingsRepository";
+import { AudioButton } from "@/components/ui/AudioButton";
 
 type Props = {
   settings: TempleSettingsPlain;
 };
 
 export function PublicHeader({ settings }: Props) {
-  const gurujiImage = settings.logoUrl || "/assets/guruji.jpg";
+  const logoImage = settings.logoUrl || "/assets/guruji.jpg";
+  const showAudio = settings.audioEnabled !== false;
 
   return (
-    <header className="border-b bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:py-5">
-        <Link href="/" className="min-w-0">
-          <div className="flex min-w-0 items-center gap-3">
-            <Image
-              src={gurujiImage}
-              alt="Sri Padmananda Guruji"
-              width={48}
-              height={48}
-              className="h-9 w-9 shrink-0 rounded-full border-2 border-primary/20 object-cover sm:h-12 sm:w-12"
-              priority
-            />
-            <div>
-              <p className="text-lg font-bold leading-tight text-primary sm:text-xl">{settings.templeName}</p>
-              <p className="text-xs text-muted-foreground sm:text-sm">{settings.templeDescription || "Seva Booking & Management"}</p>
+    <>
+      <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 temple-border-bottom shadow-sm">
+        <div className="container mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
+            <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-gold shadow-md">
+              <Image
+                src={logoImage}
+                alt={settings.templeName}
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
-          </div>
-        </Link>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href="/donate">Book Seva</Link>
-        </Button>
-      </div>
-    </header>
+            <div className="flex flex-col">
+              <span className="font-serif text-lg sm:text-2xl font-bold text-saffron tracking-tight group-hover:text-gold transition-colors">
+                {settings.templeName}
+              </span>
+              <span className="text-xs sm:text-sm text-copper font-medium italic">
+                {settings.templeDescription || "Seva Booking & Management"}
+              </span>
+            </div>
+          </Link>
+          
+          <nav className="flex items-center gap-4">
+            <Link 
+              href="/donate" 
+              className="bg-gradient-to-r from-saffron to-gold hover:from-gold hover:to-saffron text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold shadow-md hover:shadow-lg transition-all active:scale-95 text-sm sm:text-base animate-pulse-glow"
+            >
+              Book Seva
+            </Link>
+          </nav>
+        </div>
+      </header>
+      {showAudio && <AudioButton />}
+    </>
   );
 }

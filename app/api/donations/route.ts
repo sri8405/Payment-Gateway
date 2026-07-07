@@ -30,11 +30,17 @@ export async function POST(request: NextRequest) {
       sevaId: seva._id,
       sevaName: seva.name,
       amount: parsed.data.amount,
-      status: "PENDING"
+      status: "PENDING",
+      paymentStatus: "PENDING",
+      paymentSource: "Online",
+      donationType: "SEVA",
+      bookingStatus: "BOOKED",
+      paymentLogs: []
     });
 
     return Response.json({ donation });
   } catch (error) {
+    console.error("Donation route error:", error);
     return apiErrorResponse(error);
   }
 }

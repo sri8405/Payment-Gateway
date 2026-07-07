@@ -12,11 +12,6 @@ export default auth((req) => {
       ? session.user.role.toUpperCase()
       : undefined;
 
-  console.log("[middleware] path:", pathname);
-  console.log("[middleware] token present:", !!session, "role:", role);
-  console.log("[middleware] req.auth:", JSON.stringify(session));
-  console.log("[middleware] Cookies:", JSON.stringify(req.cookies.getAll()));
-
   // Protected admin routes — require ADMIN role
   if (
     pathname.startsWith("/admin") &&
@@ -33,7 +28,19 @@ export default auth((req) => {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // Security headers
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()"
+  );
+
+  return response;
 });
 
 export const config = {

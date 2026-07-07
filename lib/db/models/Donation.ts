@@ -15,11 +15,24 @@ const donationSchema = new Schema(
       enum: ["PENDING", "VERIFIED"],
       default: "PENDING",
       required: true
-    }
+    },
+    paymentStatus: { type: String, enum: ["PENDING", "INITIATED", "SUCCESS", "FAILED", "REFUNDED"], default: "PENDING" },
+    paymentSource: { type: String, enum: ["Online", "Offline"], default: "Online" },
+    merchantTransactionId: { type: String, sparse: true, index: true },
+    phonePeTransactionId: { type: String },
+    paymentMethod: { type: String, trim: true },
+    receiptNumber: { type: String, sparse: true, unique: true },
+    transactionTime: { type: Date },
+    donationType: { type: String, enum: ["SEVA", "DONATION"], default: "SEVA" },
+    bookingStatus: { type: String, enum: ["BOOKED", "COMPLETED", "CANCELLED"], default: "BOOKED" },
+    paymentLogs: [{ status: String, timestamp: { type: Date, default: Date.now }, rawResponse: Schema.Types.Mixed }],
+    nakshatra: { type: String, trim: true },
+    enteredBy: { type: String, trim: true }
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+donationSchema.index({ paymentStatus: 1, merchantTransactionId: 1 });
 donationSchema.index({ name: "text", gothra: "text", donationId: "text" });
 donationSchema.index({ createdAt: -1 });
 

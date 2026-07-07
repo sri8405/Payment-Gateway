@@ -1,13 +1,9 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { PublicHeader } from "@/components/layout/PublicHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { donationRepository } from "@/lib/db/repositories/donationRepository";
-import { paymentService } from "@/lib/payment/UPIPaymentService";
-import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
-import { PaymentSection } from "@/components/donation/PaymentSection";
+"use client";
+
+import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -15,68 +11,88 @@ type Props = {
   searchParams: Promise<{ id?: string }>;
 };
 
-export default async function PayPage({ searchParams }: Props) {
-  const { id } = await searchParams;
-  if (!id) notFound();
-  const userAgent = (await headers()).get("user-agent") || "";
-  const initialDeviceType = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
-    ? "mobile"
-    : "desktop";
-  const settings = await templeSettingsRepository.getCurrentOrDefault();
-  let donation: Awaited<ReturnType<typeof donationRepository.findById>> = null;
-  donation = await donationRepository.findById(id);
+export default function PayPage({ searchParams }: Props) {
+  const router = useRouter();
+  const { id } = use(searchParams);
+  const [error, setError] = useState("");
 
-  if (!donation) notFound();
-  // Use receiverName (human-readable account holder) for display, fall back to upiDisplayName or templeName.
-  // upiId and upiDisplayName are always populated (either from DB or environment fallback in repository).
-  const paymentUpiId = settings.upiId;
-  const paymentUpiName = settings.upiDisplayName || settings.templeName;
-  const paymentReceiverName = settings.receiverName || settings.upiDisplayName || settings.templeName;
-  const payment = await paymentService.initiatePayment({
-    donationId: donation.donationId,
-    amount: donation.amount,
-    name: donation.name,
-    sevaName: donation.sevaName,
-    upiId: paymentUpiId,
-    upiDisplayName: paymentUpiName,
-    receiverName: paymentReceiverName
-  });
+  useEffect(() => {
+    if (!id) {
+      router.push("/donate");
+      return;
+    }
+
+    const initiatePayment = async () => {
+      try {
+        const response = await fetch("/api/payments/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ donationId: id }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        } else {
+          setError(data.error || "Failed to initialize payment gateway");
+        }
+      } catch (err: any) {
+        setError(err.message || "An unexpected error occurred");
+      }
+    };
+
+    initiatePayment();
+  }, [id, router]);
 
   return (
-    <main>
-      <PublicHeader settings={settings} />
-      <section className="mx-auto max-w-xl px-4 py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>UPI Payment</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <dl className="grid grid-cols-2 gap-3 text-sm">
-              <dt className="text-muted-foreground">Seva Booking ID</dt>
-              <dd className="font-medium">{donation.donationId}</dd>
-              <dt className="text-muted-foreground">Name</dt>
-              <dd className="font-medium">{donation.name}</dd>
-              <dt className="text-muted-foreground">Seva</dt>
-              <dd className="font-medium">{donation.sevaName}</dd>
-              <dt className="text-muted-foreground">Amount</dt>
-              <dd className="font-medium">Rs {donation.amount}</dd>
-            </dl>
-            <PaymentSection
-              paymentUrl={payment.paymentUrl}
-              upiId={paymentUpiId}
-              receiverName={paymentReceiverName}
-              amount={donation.amount}
-              name={donation.name}
-              sevaName={donation.sevaName}
-              donationId={donation.donationId}
-              initialDeviceType={initialDeviceType}
-            />
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/donate/acknowledgement?id=${encodeURIComponent(donation.donationId)}`}>Continue</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    </main>
+    <div className="container mx-auto max-w-xl px-4 py-20 flex items-center justify-center min-h-[60vh]">
+      <Card className="w-full border-saffron/20 shadow-2xl rounded-2xl overflow-hidden bg-white/90 backdrop-blur">
+        <CardHeader className="bg-gradient-to-r from-saffron/10 to-gold/10 border-b border-saffron/10 text-center pb-8">
+          <CardTitle className="text-2xl font-serif text-copper">Secure Payment</CardTitle>
+          <CardDescription>You are being redirected to our secure payment partner</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-12 pb-12 flex flex-col items-center text-center">
+          {error ? (
+            <div className="space-y-6">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-destructive mb-2">Payment Error</h3>
+                <p className="text-muted-foreground">{error}</p>
+              </div>
+              <button 
+                onClick={() => router.push("/donate")}
+                className="px-6 py-2 bg-secondary/20 text-secondary-foreground rounded-full hover:bg-secondary/30 transition-colors"
+              >
+                Go Back
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-8 animate-fade-in-up">
+              <div className="relative w-24 h-24 mx-auto">
+                <div className="absolute inset-0 border-4 border-saffron/20 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-saffron border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ShieldCheck className="w-10 h-10 text-saffron" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-serif text-xl font-bold text-foreground">Processing...</h3>
+                <p className="text-muted-foreground text-sm">Please do not close this window or press back</p>
+              </div>
+              
+              <div className="pt-6 flex items-center justify-center gap-3 text-xs text-muted-foreground font-medium">
+                <span className="flex items-center gap-1"><ShieldCheck size={14} className="text-green-600"/> 100% Secure</span>
+                <span>•</span>
+                <span>Powered by PhonePe</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

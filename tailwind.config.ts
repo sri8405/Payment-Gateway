@@ -9,6 +9,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['Playfair Display', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -38,12 +42,25 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
-        }
+        },
+        saffron: "hsl(var(--saffron))",
+        gold: "hsl(var(--gold))",
+        maroon: "hsl(var(--maroon))",
+        copper: "hsl(var(--copper))",
+        ivory: "hsl(var(--ivory))",
+        sandstone: "hsl(var(--sandstone))"
       },
       borderRadius: {
         lg: "0.5rem",
         md: "0.375rem",
         sm: "0.25rem"
+      },
+      animation: {
+        'scroll-left': 'scroll-left 30s linear infinite',
+        'float': 'float 4s ease-in-out infinite',
+        'shimmer': 'shimmer 3s ease-in-out infinite',
+        'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
       }
     }
   },

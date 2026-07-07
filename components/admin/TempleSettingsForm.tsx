@@ -12,9 +12,10 @@ import { NativeSelect } from "@/components/ui/native-select";
 import {
   templeSettingsSchema,
   DEFAULT_PAYMENT_APP_OPTIONS,
-  type TempleSettingsInput
+  type TempleSettingsInput,
 } from "@/lib/validations/templeSettings";
 import type { TempleSettingsPlain } from "@/lib/db/repositories/templeSettingsRepository";
+import { FileUpload } from "@/components/admin/FileUpload";
 
 type Props = {
   initialSettings: TempleSettingsPlain;
@@ -36,17 +37,38 @@ export function TempleSettingsForm({ initialSettings }: Props) {
     email: initialSettings.email || "",
     address: initialSettings.address || "",
     logoUrl: initialSettings.logoUrl || "/assets/guruji.jpg",
-    receiptFooter: initialSettings.receiptFooter || "May Guruji's blessings always be with you."
+    receiptFooter: initialSettings.receiptFooter || "",
+    bannerUrl: initialSettings.bannerUrl || "",
+    websiteFooter: initialSettings.websiteFooter || "",
+    templeTimings: initialSettings.templeTimings || "",
+    supportContact: initialSettings.supportContact || "",
+    socialMediaLinks: {
+      facebook: initialSettings.socialMediaLinks?.facebook || "",
+      instagram: initialSettings.socialMediaLinks?.instagram || "",
+      youtube: initialSettings.socialMediaLinks?.youtube || "",
+      twitter: initialSettings.socialMediaLinks?.twitter || "",
+      website: initialSettings.socialMediaLinks?.website || "",
+    },
+    phonepeClientId: initialSettings.phonepeClientId || "",
+    phonepeClientSecret: initialSettings.phonepeClientSecret || "",
+    phonepeClientVersion: initialSettings.phonepeClientVersion || "",
+    phonepeMerchantId: initialSettings.phonepeMerchantId || "",
+    phonepeRedirectUrl: initialSettings.phonepeRedirectUrl || "",
+    phonepeCallbackUrl: initialSettings.phonepeCallbackUrl || "",
+    audioEnabled: initialSettings.audioEnabled ?? true,
+    audioUrl: initialSettings.audioUrl || "/audio/devotional.mp3",
   };
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting, isDirty }
+    watch,
+    setValue,
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<z.input<typeof templeSettingsSchema>, unknown, TempleSettingsInput>({
     resolver: zodResolver(templeSettingsSchema),
-    defaultValues
+    defaultValues,
   });
 
   function showToast(type: "success" | "error", message: string) {
@@ -60,11 +82,10 @@ export function TempleSettingsForm({ initialSettings }: Props) {
       const response = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values)
+        body: JSON.stringify(values),
       });
       const data = await response.json();
       if (response.ok) {
-        // Update form defaults so "isDirty" resets correctly
         reset(values as z.input<typeof templeSettingsSchema>);
         showToast("success", "Settings saved successfully.");
       } else {
@@ -75,19 +96,12 @@ export function TempleSettingsForm({ initialSettings }: Props) {
     }
   }
 
-  function handleReset() {
-    reset(defaultValues);
-    setToast(null);
-  }
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Toast */}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       {toast ? (
         <div
           role="status"
-          aria-live="polite"
-          className={`rounded-md border px-4 py-3 text-sm font-medium ${
+          className={`rounded-lg border px-4 py-3 text-sm font-medium ${
             toast.type === "success"
               ? "border-green-300 bg-green-50 text-green-800"
               : "border-destructive/30 bg-destructive/10 text-destructive"
@@ -98,89 +112,125 @@ export function TempleSettingsForm({ initialSettings }: Props) {
       ) : null}
 
       {/* Temple Information */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Temple Information</h2>
+      <Section title="🏛️ Temple Information">
         <Field label="Temple Name" error={errors.templeName?.message} required>
           <Input {...register("templeName")} />
         </Field>
         <Field label="Description" error={errors.templeDescription?.message}>
           <Textarea {...register("templeDescription")} />
         </Field>
-        <Field label="Contact Number" error={errors.contactNumber?.message}>
-          <Input {...register("contactNumber")} />
-        </Field>
-        <Field label="Email" error={errors.email?.message}>
-          <Input type="email" {...register("email")} />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Contact Number" error={errors.contactNumber?.message}>
+            <Input {...register("contactNumber")} />
+          </Field>
+          <Field label="Email" error={errors.email?.message}>
+            <Input type="email" {...register("email")} />
+          </Field>
+        </div>
         <Field label="Address" error={errors.address?.message}>
           <Textarea {...register("address")} />
         </Field>
-      </section>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Temple Timings" error={errors.templeTimings?.message}>
+            <Input {...register("templeTimings")} placeholder="e.g., 6:00 AM - 9:00 PM" />
+          </Field>
+          <Field label="Support Contact" error={errors.supportContact?.message}>
+            <Input {...register("supportContact")} />
+          </Field>
+        </div>
+      </Section>
+
+      {/* Branding */}
+      <Section title="🎨 Branding">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Logo Image" error={errors.logoUrl?.message}>
+            <FileUpload 
+              value={watch("logoUrl") || ""}
+              onChange={(url) => setValue("logoUrl", url, { shouldDirty: true, shouldValidate: true })}
+              accept="image/*"
+              label="Upload Logo"
+            />
+          </Field>
+          <Field label="Banner Image" error={errors.bannerUrl?.message}>
+            <FileUpload 
+              value={watch("bannerUrl") || ""}
+              onChange={(url) => setValue("bannerUrl", url, { shouldDirty: true, shouldValidate: true })}
+              accept="image/*"
+              label="Upload Banner"
+            />
+          </Field>
+        </div>
+        <Field label="Website Footer Text" error={errors.websiteFooter?.message}>
+          <Input {...register("websiteFooter")} />
+        </Field>
+        <Field label="Receipt Footer Text" error={errors.receiptFooter?.message}>
+          <Textarea {...register("receiptFooter")} />
+        </Field>
+      </Section>
 
       {/* Payment Settings */}
-      <section className="space-y-4 rounded-md border p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Payment Settings</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            These values are used to generate UPI payment links and QR codes for every new seva booking.
-            Saving here takes effect immediately — no redeployment needed.
-          </p>
+      <Section title="💳 UPI Payment Settings">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="UPI ID" error={errors.upiId?.message} required>
+            <Input {...register("upiId")} placeholder="username@bank" />
+          </Field>
+          <Field label="UPI Display Name" error={errors.upiDisplayName?.message} required>
+            <Input {...register("upiDisplayName")} />
+          </Field>
         </div>
-
-        <Field label="UPI ID" error={errors.upiId?.message} required hint="e.g. 9880742348@ybl">
-          <Input
-            {...register("upiId")}
-            placeholder="username@bank"
-            autoComplete="off"
-            spellCheck={false}
-          />
+        <Field label="Receiver Name" error={errors.receiverName?.message} required>
+          <Input {...register("receiverName")} />
         </Field>
-
-        <Field
-          label="Account Holder / Receiver Name"
-          error={errors.receiverName?.message}
-          required
-          hint="Shown on the payment screen and printed on the PDF receipt (max 100 characters)"
-        >
-          <Input
-            {...register("receiverName")}
-            placeholder="Sri Padmananda Guruji Ashrama"
-            maxLength={100}
-          />
-        </Field>
-
-        <Field label="UPI Display Name" error={errors.upiDisplayName?.message} required hint="Short name embedded in the UPI deep link">
-          <Input {...register("upiDisplayName")} />
-        </Field>
-
-        <Field label="Default Payment App" error={errors.defaultPaymentApp?.message} hint="Pre-selects an app button on the payment page (optional preference)">
+        <Field label="Default Payment App">
           <NativeSelect {...register("defaultPaymentApp")}>
             {DEFAULT_PAYMENT_APP_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </NativeSelect>
         </Field>
-      </section>
+      </Section>
 
-      {/* Receipt Settings */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Receipt Settings</h2>
-        <Field label="Footer Text" error={errors.receiptFooter?.message}>
-          <Textarea {...register("receiptFooter")} />
-        </Field>
-        <Field label="Logo / Guruji Image URL" error={errors.logoUrl?.message}>
-          <Input {...register("logoUrl")} />
-        </Field>
-      </section>
+      {/* Social Media */}
+      <Section title="🌐 Social Media">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Facebook">
+            <Input {...register("socialMediaLinks.facebook")} placeholder="https://facebook.com/..." />
+          </Field>
+          <Field label="Instagram">
+            <Input {...register("socialMediaLinks.instagram")} placeholder="https://instagram.com/..." />
+          </Field>
+          <Field label="YouTube">
+            <Input {...register("socialMediaLinks.youtube")} placeholder="https://youtube.com/..." />
+          </Field>
+          <Field label="Twitter">
+            <Input {...register("socialMediaLinks.twitter")} placeholder="https://twitter.com/..." />
+          </Field>
+          <Field label="Website">
+            <Input {...register("socialMediaLinks.website")} placeholder="https://..." />
+          </Field>
+        </div>
+      </Section>
+
+      {/* Audio */}
+      <Section title="🔔 Devotional Audio">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Devotional Audio File">
+            <FileUpload 
+              value={watch("audioUrl") || ""}
+              onChange={(url) => setValue("audioUrl", url, { shouldDirty: true, shouldValidate: true })}
+              accept="audio/*"
+              label="Upload Audio"
+            />
+          </Field>
+        </div>
+      </Section>
 
       {/* Actions */}
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isSubmitting || !isDirty}>
           {isSubmitting ? "Saving..." : "Save Changes"}
         </Button>
-        <Button type="button" variant="outline" onClick={handleReset} disabled={isSubmitting || !isDirty}>
+        <Button type="button" variant="outline" onClick={() => { reset(defaultValues); setToast(null); }} disabled={isSubmitting || !isDirty}>
           Reset
         </Button>
       </div>
@@ -188,24 +238,23 @@ export function TempleSettingsForm({ initialSettings }: Props) {
   );
 }
 
-function Field({
-  label,
-  error,
-  hint,
-  required,
-  children
-}: {
-  label: string;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-4 rounded-xl border border-gold/15 bg-white p-5">
+      <h2 className="font-serif text-lg font-semibold text-copper">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Field({ label, error, hint, required, children }: {
+  label: string; error?: string; hint?: string; required?: boolean; children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
       <Label>
         {label}
-        {required ? <span className="ml-1 text-destructive" aria-hidden="true">*</span> : null}
+        {required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
       {children}
       {hint && !error ? <p className="text-xs text-muted-foreground">{hint}</p> : null}

@@ -16,6 +16,18 @@ export type DonationPlain = {
   sevaName: string;
   amount: number;
   status: DonationStatus;
+  paymentStatus: string;
+  merchantTransactionId?: string;
+  phonePeTransactionId?: string;
+  paymentMethod?: string;
+  receiptNumber?: string;
+  transactionTime?: Date;
+  donationType: string;
+  bookingStatus: string;
+  paymentLogs: any[];
+  paymentSource: string;
+  nakshatra?: string;
+  enteredBy?: string;
   createdAt: Date;
 };
 
@@ -29,6 +41,8 @@ export type DonationFilters = {
   to?: Date;
   sevaId?: string;
   status?: DonationStatus;
+  paymentSource?: string;
+  paymentMethod?: string;
   page?: number;
   limit?: number;
 };
@@ -45,6 +59,18 @@ function plainDonation(doc: any): DonationPlain {
     sevaName: doc.sevaName,
     amount: doc.amount,
     status: doc.status,
+    paymentStatus: doc.paymentStatus || "PENDING",
+    merchantTransactionId: doc.merchantTransactionId,
+    phonePeTransactionId: doc.phonePeTransactionId,
+    paymentMethod: doc.paymentMethod,
+    receiptNumber: doc.receiptNumber,
+    transactionTime: doc.transactionTime,
+    donationType: doc.donationType || "SEVA",
+    bookingStatus: doc.bookingStatus || "BOOKED",
+    paymentLogs: doc.paymentLogs || [],
+    paymentSource: doc.paymentSource || "Online",
+    nakshatra: doc.nakshatra,
+    enteredBy: doc.enteredBy,
     createdAt: doc.createdAt
   };
 }
@@ -77,6 +103,14 @@ function buildFilters(filters: DonationFilters = {}) {
 
   if (filters.status) {
     query.status = filters.status;
+  }
+
+  if (filters.paymentSource) {
+    query.paymentSource = filters.paymentSource;
+  }
+
+  if (filters.paymentMethod) {
+    query.paymentMethod = filters.paymentMethod;
   }
 
   return query;
@@ -205,7 +239,7 @@ export const donationRepository = {
       const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const [overall, today, month, uniqueDonors] = await Promise.all([
+      const [overall, today, month, uniqueDonors, successful, failed, topSeva, topDonor] = await Promise.all([
         Donation.aggregate([{ $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }]),
         Donation.aggregate([
           { $match: { createdAt: { $gte: startOfDay, $lt: startOfTomorrow } } },
@@ -215,13 +249,21 @@ export const donationRepository = {
           { $match: { createdAt: { $gte: startOfMonth } } },
           { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }
         ]),
-        Donation.distinct("name")
+        Donation.distinct("name"),
+        Donation.countDocuments({ paymentStatus: 'SUCCESS' }),
+        Donation.countDocuments({ paymentStatus: 'FAILED' }),
+        Donation.aggregate([{ $group: { _id: "$sevaName", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+        Donation.aggregate([{ $match: { paymentStatus: 'SUCCESS' } }, { $sort: { amount: -1 } }, { $limit: 1 }])
       ]);
 
       return {
         totalDonations: overall[0]?.count || 0,
         totalAmount: overall[0]?.amount || 0,
         uniqueDonors: uniqueDonors.length,
+        successfulPayments: successful,
+        failedPayments: failed,
+        topSeva: topSeva[0]?._id || null,
+        topDonor: topDonor[0] ? { name: topDonor[0].name, amount: topDonor[0].amount } : null,
         today: { count: today[0]?.count || 0, amount: today[0]?.amount || 0 },
         month: { count: month[0]?.count || 0, amount: month[0]?.amount || 0 }
       };
@@ -245,6 +287,123 @@ export const donationRepository = {
         throw error;
       }
       throw new AppError("DATABASE_ERROR", "Failed to delete donation");
+    }
+  },
+
+  async updatePaymentStatus(merchantTransactionId: string, data: { paymentStatus: string, phonePeTransactionId?: string, paymentMethod?: string, transactionTime?: Date, paymentLog?: any }) {
+    try {
+      await connectToDatabase();
+      const updateDoc: any = { paymentStatus: data.paymentStatus };
+      if (data.phonePeTransactionId) updateDoc.phonePeTransactionId = data.phonePeTransactionId;
+      if (data.paymentMethod) updateDoc.paymentMethod = data.paymentMethod;
+      if (data.transactionTime) updateDoc.transactionTime = data.transactionTime;
+      
+      const updateOp: any = { $set: updateDoc };
+      if (data.paymentLog) {
+        updateOp.$push = { paymentLogs: data.paymentLog };
+      }
+
+      const donation = await Donation.findOneAndUpdate(
+        { merchantTransactionId },
+        updateOp,
+        { new: true }
+      ).lean();
+
+      if (!donation) {
+        throw new AppError("NOT_FOUND", "Donation not found by transaction ID");
+      }
+      return plainDonation(donation);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("DATABASE_ERROR", "Failed to update payment status");
+    }
+  },
+
+  async findByMerchantTransactionId(merchantTransactionId: string) {
+    try {
+      await connectToDatabase();
+      const donation = await Donation.findOne({ merchantTransactionId }).lean();
+      return donation ? plainDonation(donation) : null;
+    } catch (error) {
+      throw new AppError("DATABASE_ERROR", "Failed to find donation by transaction ID");
+    }
+  },
+
+  async findTopDonors(minAmount: number = 500, limit: number = 50) {
+    try {
+      await connectToDatabase();
+      const donors = await Donation.find({ paymentStatus: 'SUCCESS', amount: { $gte: minAmount } })
+        .sort({ amount: -1 })
+        .limit(limit)
+        .select('name amount sevaName')
+        .lean();
+      return donors;
+    } catch (error) {
+      throw new AppError("DATABASE_ERROR", "Failed to get top donors");
+    }
+  },
+
+  async dailyCollections(days: number = 7) {
+    try {
+      await connectToDatabase();
+      const from = new Date();
+      from.setDate(from.getDate() - days);
+      
+      const result = await Donation.aggregate([
+        { $match: { paymentStatus: 'SUCCESS', createdAt: { $gte: from } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            amount: { $sum: "$amount" }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+      return result.map(r => ({ date: r._id, amount: r.amount }));
+    } catch (error) {
+      throw new AppError("DATABASE_ERROR", "Failed to get daily collections");
+    }
+  },
+
+  async monthlyCollections(months: number = 6) {
+    try {
+      await connectToDatabase();
+      const from = new Date();
+      from.setMonth(from.getMonth() - months);
+      
+      const result = await Donation.aggregate([
+        { $match: { paymentStatus: 'SUCCESS', createdAt: { $gte: from } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+            amount: { $sum: "$amount" }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+      return result.map(r => ({ month: r._id, amount: r.amount }));
+    } catch (error) {
+      throw new AppError("DATABASE_ERROR", "Failed to get monthly collections");
+    }
+  },
+
+  async popularSevas(limit: number = 5) {
+    try {
+      await connectToDatabase();
+      const result = await Donation.aggregate([
+        { $match: { paymentStatus: 'SUCCESS' } },
+        {
+          $group: {
+            _id: "$sevaName",
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } },
+        { $limit: limit }
+      ]);
+      return result.map(r => ({ sevaName: r._id, count: r.count }));
+    } catch (error) {
+      throw new AppError("DATABASE_ERROR", "Failed to get popular sevas");
     }
   }
 };

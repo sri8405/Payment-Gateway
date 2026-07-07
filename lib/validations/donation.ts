@@ -17,6 +17,7 @@ const optionalMobile = z
 export const donationSchema = z.object({
   name: z.string().trim().min(2, "Full name is required"),
   gothra: z.string().trim().min(2, "Gothra is required"),
+  nakshatra: z.string().trim().optional().or(z.literal("")),
   mobile: optionalMobile,
   email: optionalEmail,
   sevaId: z.string().min(1, "Select a seva"),
@@ -24,3 +25,19 @@ export const donationSchema = z.object({
 });
 
 export type DonationInput = z.infer<typeof donationSchema>;
+
+export const offlineBookingSchema = z.object({
+  name: z.string().trim().min(2, "Full name is required"),
+  gothra: z.string().trim().optional().or(z.literal("")),
+  nakshatra: z.string().trim().optional().or(z.literal("")),
+  mobile: z.string().trim().refine((value) => /^[6-9]\d{9}$/.test(value), "Enter a valid 10 digit mobile number"),
+  email: optionalEmail,
+  sevaId: z.string().min(1, "Select a seva"),
+  amount: z.coerce.number().int().positive("Amount must be greater than zero"),
+  paymentMethod: z.enum(["Cash", "Manual UPI", "Card", "Cheque", "Other"], {
+    required_error: "Select a payment method",
+  }),
+  bookingDate: z.string().optional()
+});
+
+export type OfflineBookingInput = z.infer<typeof offlineBookingSchema>;

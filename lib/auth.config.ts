@@ -18,19 +18,14 @@ export const authConfig = {
   providers: [], // Providers are added in auth.ts (Node.js runtime only)
   callbacks: {
     async jwt({ token, user }) {
-      console.log("[next-auth][jwt] incoming token:", token, "user:", user);
-
       if (user) {
         token.role =
           typeof user.role === "string" ? user.role.toUpperCase() : "ADMIN";
         token.adminId = user.id;
       }
-
-      console.log("[next-auth][jwt] outgoing token:", token);
       return token;
     },
     async session({ session, token }) {
-      console.log("[next-auth][session] before:", session, "token:", token);
       const role =
         typeof token.role === "string" ? token.role.toUpperCase() : undefined;
 
@@ -42,8 +37,6 @@ export const authConfig = {
       if (token.adminId) {
         session.user.id = token.adminId as string;
       }
-
-      console.log("[next-auth][session] after:", session);
       return session;
     },
   },

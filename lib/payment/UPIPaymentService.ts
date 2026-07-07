@@ -75,16 +75,6 @@ function buildPersonalUpiUrl(
     ? `intent://pay?${upiParams}#Intent;scheme=upi;end`
     : `upi://pay?${upiParams}`;
   
-  // Log for debugging (helps diagnose issues)
-  console.log('[UPI Payment] Generated URI:', uri);
-  console.log('[UPI Payment] Platform:', isAndroid ? 'Android (intent://)' : 'iOS/Desktop (upi://)');
-  console.log('[UPI Payment] Parameters:', {
-    pa: upiId,
-    pn: cleanName,
-    am: formattedAmount,
-    cu: 'INR'
-  });
-  
   return uri;
 }
 

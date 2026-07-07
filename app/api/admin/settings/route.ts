@@ -44,7 +44,20 @@ export async function PUT(request: Request) {
       email: parsed.data.email || undefined,
       address: parsed.data.address || undefined,
       logoUrl: parsed.data.logoUrl || undefined,
-      receiptFooter: parsed.data.receiptFooter || undefined
+      receiptFooter: parsed.data.receiptFooter || undefined,
+      bannerUrl: parsed.data.bannerUrl || undefined,
+      websiteFooter: parsed.data.websiteFooter || undefined,
+      templeTimings: parsed.data.templeTimings || undefined,
+      supportContact: parsed.data.supportContact || undefined,
+      socialMediaLinks: parsed.data.socialMediaLinks,
+      phonepeClientId: parsed.data.phonepeClientId || undefined,
+      phonepeClientSecret: parsed.data.phonepeClientSecret || undefined,
+      phonepeClientVersion: parsed.data.phonepeClientVersion || undefined,
+      phonepeMerchantId: parsed.data.phonepeMerchantId || undefined,
+      phonepeRedirectUrl: parsed.data.phonepeRedirectUrl || undefined,
+      phonepeCallbackUrl: parsed.data.phonepeCallbackUrl || undefined,
+      audioEnabled: parsed.data.audioEnabled,
+      audioUrl: parsed.data.audioUrl || undefined
     });
 
     await auditLogRepository.create({

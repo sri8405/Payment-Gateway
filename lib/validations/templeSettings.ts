@@ -50,7 +50,26 @@ export const templeSettingsSchema = z.object({
   ),
   address: optionalText,
   logoUrl: optionalText,
-  receiptFooter: optionalText
+  receiptFooter: optionalText,
+  bannerUrl: optionalText,
+  websiteFooter: optionalText,
+  templeTimings: optionalText,
+  supportContact: optionalText,
+  socialMediaLinks: z.object({
+    facebook: optionalText,
+    instagram: optionalText,
+    youtube: optionalText,
+    twitter: optionalText,
+    website: optionalText
+  }).optional(),
+  phonepeClientId: optionalText,
+  phonepeClientSecret: optionalText,
+  phonepeClientVersion: optionalText,
+  phonepeMerchantId: optionalText,
+  phonepeRedirectUrl: optionalText,
+  phonepeCallbackUrl: optionalText,
+  audioEnabled: z.boolean().default(true),
+  audioUrl: optionalText
 });
 
 export type TempleSettingsInput = z.infer<typeof templeSettingsSchema>;

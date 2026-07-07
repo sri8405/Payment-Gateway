@@ -2,31 +2,169 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --background: 42 30% 98%;
-  --foreground: 220 25% 15%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 25% 15%;
-  --primary: 173 62% 27%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 32 82% 94%;
-  --secondary-foreground: 28 70% 24%;
-  --muted: 210 20% 94%;
-  --muted-foreground: 215 14% 40%;
-  --accent: 350 72% 95%;
-  --accent-foreground: 350 58% 28%;
-  --destructive: 0 72% 48%;
+  --background: 40 45% 97%;
+  --foreground: 20 30% 15%;
+  --card: 40 30% 99%;
+  --card-foreground: 20 30% 15%;
+  --primary: 24 85% 42%;
+  --primary-foreground: 40 50% 97%;
+  --secondary: 40 70% 55%;
+  --secondary-foreground: 20 50% 18%;
+  --muted: 35 25% 91%;
+  --muted-foreground: 20 15% 45%;
+  --accent: 20 60% 40%;
+  --accent-foreground: 40 50% 97%;
+  --destructive: 0 65% 48%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214 22% 88%;
-  --input: 214 22% 88%;
-  --ring: 173 62% 27%;
+  --border: 35 25% 85%;
+  --input: 35 25% 85%;
+  --ring: 24 85% 42%;
+  --success: 145 60% 36%;
+  --success-foreground: 0 0% 100%;
+  --saffron: 24 85% 42%;
+  --gold: 40 70% 55%;
+  --maroon: 345 75% 25%;
+  --copper: 20 60% 40%;
+  --ivory: 40 45% 97%;
+  --sandstone: 35 30% 78%;
 }
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Temple decorative border */
+.temple-border {
+  border-image: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--gold)) 20%,
+    hsl(var(--saffron)) 50%,
+    hsl(var(--gold)) 80%,
+    transparent
+  ) 1;
+}
+
+.temple-border-top {
+  border-top: 2px solid;
+  border-image: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--gold)) 20%,
+    hsl(var(--saffron)) 50%,
+    hsl(var(--gold)) 80%,
+    transparent
+  ) 1;
+}
+
+.temple-border-bottom {
+  border-bottom: 2px solid;
+  border-image: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--gold)) 20%,
+    hsl(var(--saffron)) 50%,
+    hsl(var(--gold)) 80%,
+    transparent
+  ) 1;
+}
+
+/* Devotee ticker animation */
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
+}
+
+.animate-scroll-left:hover {
+  animation-play-state: paused;
+}
+
+/* Subtle float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, hsl(var(--gold) / 0.15) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Pulse glow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--saffron) / 0.3); }
+  50% { box-shadow: 0 0 16px 4px hsl(var(--saffron) / 0.15); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--sandstone));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--copper));
+}
+
+/* Selection color */
+::selection {
+  background: hsl(var(--saffron) / 0.2);
   color: hsl(var(--foreground));
 }

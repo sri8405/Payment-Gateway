@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "seed": "ts-node --project tsconfig.seed.json scripts/seed.ts"
+    "seed": "ts-node --project tsconfig.seed.json scripts/seed.ts",
+    "cap:sync": "cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-checkbox": "^1.1.5",
     "@radix-ui/react-dialog": "^1.1.6",
