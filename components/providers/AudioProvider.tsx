@@ -52,7 +52,7 @@ export function AudioProvider({ children, initialAudioUrl }: { children: React.R
           // Attempt to autoplay
           audio.play().then(() => {
             setIsPlaying(true);
-          }).catch((e) => {
+          }).catch(() => {
             // Autoplay was prevented by browser (requires user interaction)
             console.log("Autoplay prevented by browser, waiting for interaction...");
             setIsPlaying(false);
@@ -60,8 +60,8 @@ export function AudioProvider({ children, initialAudioUrl }: { children: React.R
               window.addEventListener(event, playAudio, { once: true });
             });
           });
-        } catch (e) {
-          console.error("Failed to initialize audio", e);
+        } catch {
+          console.error("Failed to initialize audio");
         }
       } else if (audioRef.current.src !== window.location.origin + audioUrl && audioRef.current.src !== audioUrl) {
         audioRef.current.src = audioUrl;
@@ -69,8 +69,8 @@ export function AudioProvider({ children, initialAudioUrl }: { children: React.R
         // Attempt to autoplay on URL change
         audioRef.current.play().then(() => {
           setIsPlaying(true);
-        }).catch((e) => {
-          console.log("Autoplay prevented by browser:", e);
+        }).catch(() => {
+          console.log("Autoplay prevented by browser");
           setIsPlaying(false);
         });
       }

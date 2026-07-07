@@ -12,6 +12,7 @@ export type SevaPlain = {
   pricingMode?: "fixed" | "custom" | "options";
   fixedAmount?: number;
   defaultAmount?: number;
+  amountOptions?: number[];
   category?: string;
   imageUrl?: string;
   createdAt: Date;
@@ -28,6 +29,7 @@ function plainSeva(doc: any): SevaPlain {
     pricingMode: doc.pricingMode || "fixed",
     fixedAmount: doc.fixedAmount || doc.suggestedAmount,
     defaultAmount: doc.defaultAmount || doc.suggestedAmount,
+    amountOptions: doc.amountOptions || [],
     category: doc.category,
     imageUrl: doc.imageUrl,
     createdAt: doc.createdAt

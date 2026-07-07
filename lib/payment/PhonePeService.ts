@@ -63,7 +63,7 @@ export const PhonePeService = {
         return { success: true, redirectUrl: data.data.instrumentResponse.redirectInfo.url, merchantTransactionId: params.merchantTransactionId };
       }
       return { success: false, redirectUrl: null, merchantTransactionId: params.merchantTransactionId };
-    } catch (error) {
+    } catch {
       return { success: false, redirectUrl: null, merchantTransactionId: params.merchantTransactionId };
     }
   },
@@ -94,7 +94,7 @@ export const PhonePeService = {
          return { success: true, paymentStatus: 'SUCCESS', transactionId: data.data.transactionId };
       }
       return { success: false, paymentStatus: 'FAILED', transactionId: data.data?.transactionId };
-    } catch (error) {
+    } catch {
       return { success: false, paymentStatus: 'PENDING', transactionId: null };
     }
   },

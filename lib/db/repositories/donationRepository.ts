@@ -122,7 +122,7 @@ export const donationRepository = {
       await connectToDatabase();
       const donation = await Donation.create(input);
       return plainDonation(donation);
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to create donation");
     }
   },
@@ -138,7 +138,7 @@ export const donationRepository = {
       }).lean();
 
       return donation ? plainDonation(donation) : null;
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to find donation");
     }
   },
@@ -164,7 +164,7 @@ export const donationRepository = {
         page,
         limit
       };
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to list donations");
     }
   },
@@ -226,7 +226,7 @@ export const donationRepository = {
       return Donation.countDocuments({
         createdAt: { $gte: from, $lt: to }
       });
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to count donations");
     }
   },
@@ -267,7 +267,7 @@ export const donationRepository = {
         today: { count: today[0]?.count || 0, amount: today[0]?.amount || 0 },
         month: { count: month[0]?.count || 0, amount: month[0]?.amount || 0 }
       };
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to calculate donation stats");
     }
   },
@@ -324,7 +324,7 @@ export const donationRepository = {
       await connectToDatabase();
       const donation = await Donation.findOne({ merchantTransactionId }).lean();
       return donation ? plainDonation(donation) : null;
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to find donation by transaction ID");
     }
   },
@@ -333,12 +333,17 @@ export const donationRepository = {
     try {
       await connectToDatabase();
       const donors = await Donation.find({ paymentStatus: 'SUCCESS', amount: { $gte: minAmount } })
-        .sort({ amount: -1 })
+        .sort({ amount: -1, createdAt: -1 })
         .limit(limit)
-        .select('name amount sevaName')
+        .select('name amount sevaName createdAt')
         .lean();
-      return donors;
-    } catch (error) {
+      return donors.map(d => ({
+        name: d.name,
+        amount: d.amount,
+        sevaName: d.sevaName,
+        createdAt: d.createdAt
+      }));
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to get top donors");
     }
   },
@@ -360,7 +365,7 @@ export const donationRepository = {
         { $sort: { _id: 1 } }
       ]);
       return result.map(r => ({ date: r._id, amount: r.amount }));
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to get daily collections");
     }
   },
@@ -382,7 +387,7 @@ export const donationRepository = {
         { $sort: { _id: 1 } }
       ]);
       return result.map(r => ({ month: r._id, amount: r.amount }));
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to get monthly collections");
     }
   },
@@ -402,7 +407,7 @@ export const donationRepository = {
         { $limit: limit }
       ]);
       return result.map(r => ({ sevaName: r._id, count: r.count }));
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to get popular sevas");
     }
   }

@@ -40,12 +40,14 @@ export function SevaModal({ open, seva, onOpenChange, onSaved }: Props) {
       pricingMode: "fixed",
       fixedAmount: 100,
       defaultAmount: 100,
+      amountOptions: [100, 250, 500, 750, 1000],
       category: "",
       imageUrl: "",
     },
   });
 
   const pricingMode = watch("pricingMode");
+  const amountOptions = watch("amountOptions") || [];
 
   useEffect(() => {
     reset({
@@ -56,6 +58,7 @@ export function SevaModal({ open, seva, onOpenChange, onSaved }: Props) {
       pricingMode: seva?.pricingMode || "fixed",
       fixedAmount: seva?.fixedAmount || seva?.suggestedAmount || 100,
       defaultAmount: seva?.defaultAmount || seva?.suggestedAmount || 100,
+      amountOptions: seva?.amountOptions?.length ? seva.amountOptions : [100, 250, 500, 750, 1000],
       category: seva?.category || "",
       imageUrl: seva?.imageUrl || "",
     });
@@ -101,7 +104,7 @@ export function SevaModal({ open, seva, onOpenChange, onSaved }: Props) {
             <NativeSelect {...register("pricingMode")}>
               <option value="fixed">Fixed Amount</option>
               <option value="custom">Custom Amount (devotee can adjust)</option>
-              <option value="options">Options (100, 250, 500, 750, 1000)</option>
+              <option value="options">Multiple Fixed Options</option>
             </NativeSelect>
           </Field>
 
@@ -117,12 +120,52 @@ export function SevaModal({ open, seva, onOpenChange, onSaved }: Props) {
               </p>
             </Field>
           ) : (
-            <Field label="Default Amount (₹)" error={errors.suggestedAmount?.message}>
-              <Input type="number" min={1} {...register("suggestedAmount")} />
-              <p className="text-xs text-muted-foreground">
-                Internal reference amount for options mode.
-              </p>
-            </Field>
+            <div className="space-y-4">
+              <Field label="Amount Options (₹)" error={errors.amountOptions?.message}>
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-border">
+                  <div className="flex flex-col gap-2">
+                    {amountOptions.map((amt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          value={amt} 
+                          onChange={(e) => {
+                            const newOptions = [...amountOptions];
+                            newOptions[idx] = parseInt(e.target.value) || 0;
+                            setValue("amountOptions", newOptions, { shouldValidate: true });
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            const newOptions = amountOptions.filter((_, i) => i !== idx);
+                            setValue("amountOptions", newOptions, { shouldValidate: true });
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      setValue("amountOptions", [...amountOptions, 100], { shouldValidate: true });
+                    }}
+                  >
+                    + Add Amount Option
+                  </Button>
+                </div>
+              </Field>
+              <input type="hidden" {...register("suggestedAmount")} value={amountOptions[0] || 100} />
+            </div>
           )}
 
           {/* Hidden suggestedAmount for backward compatibility */}

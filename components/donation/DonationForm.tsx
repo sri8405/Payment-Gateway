@@ -116,7 +116,7 @@ export function DonationForm({ sevas }: Props) {
             <Field label="Offering Amount (₹)" error={errors.amount?.message} required>
               {selectedSeva.pricingMode === 'options' ? (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                  {[100, 250, 500, 750, 1000].map((amt) => (
+                  {(selectedSeva.amountOptions?.length ? selectedSeva.amountOptions : [100, 250, 500, 750, 1000]).map((amt) => (
                     <Button
                       key={amt}
                       type="button"

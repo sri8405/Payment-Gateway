@@ -54,7 +54,7 @@ export function LoginForm() {
             body: body.toString()
           });
 
-          const text = await resp.text();
+          await resp.text();
           // treat 200 as success
           if (resp.status === 200) {
             result = { ok: true };

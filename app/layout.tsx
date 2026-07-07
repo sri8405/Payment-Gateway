@@ -1,11 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AudioProvider } from "@/components/providers/AudioProvider";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
+import { PwaInstallPrompt } from "@/components/ui/PwaInstallPrompt";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "GuruSeva - Temple Seva Booking",
-  description: "Premium temple seva booking and management platform"
+  description: "Premium temple seva booking and management platform",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "GuruSeva",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c65910",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default async function RootLayout({
@@ -19,6 +35,7 @@ export default async function RootLayout({
         <AudioProvider initialAudioUrl={settings.audioUrl || ""}>
           {children}
         </AudioProvider>
+        <PwaInstallPrompt />
       </body>
     </html>
   );

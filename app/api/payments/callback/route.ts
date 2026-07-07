@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PhonePeService } from "@/lib/payment/PhonePeService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
-import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
+
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     let parsedBody;
     try {
       parsedBody = JSON.parse(bodyText);
-    } catch (e) {
+    } catch {
       return new NextResponse("Invalid JSON", { status: 400 });
     }
 

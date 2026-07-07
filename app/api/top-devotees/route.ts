@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const devotees = await donationRepository.findTopDonors(500, 50);
@@ -9,7 +12,8 @@ export async function GET() {
       {
         status: 200,
         headers: {
-          "Cache-Control": "public, max-age=60, stale-while-revalidate=120"
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          "Pragma": "no-cache"
         }
       }
     );
@@ -18,3 +22,4 @@ export async function GET() {
     return NextResponse.json({ devotees: [] }, { status: 500 });
   }
 }
+

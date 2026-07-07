@@ -32,7 +32,7 @@ export const auditLogRepository = {
       await connectToDatabase();
       const log = await AuditLog.create(input);
       return plainAuditLog(log);
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to write audit log");
     }
   }

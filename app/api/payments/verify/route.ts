@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PhonePeService } from "@/lib/payment/PhonePeService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
-import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
+
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     
     let updatedDonation;
     if (result.success && result.paymentStatus === 'SUCCESS') {
-       const receiptNumber = await generateReceiptNumber();
+
        updatedDonation = await donationRepository.updatePaymentStatus(merchantTransactionId, {
          paymentStatus: 'SUCCESS',
          phonePeTransactionId: result.transactionId,

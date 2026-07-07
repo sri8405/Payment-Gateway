@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
       description: parsed.data.description || undefined,
       suggestedAmount: parsed.data.suggestedAmount,
       active: parsed.data.active,
+      pricingMode: parsed.data.pricingMode,
+      fixedAmount: parsed.data.fixedAmount,
+      defaultAmount: parsed.data.defaultAmount,
+      amountOptions: parsed.data.amountOptions,
+      category: parsed.data.category,
+      imageUrl: parsed.data.imageUrl,
       isSystem: false
     });
 

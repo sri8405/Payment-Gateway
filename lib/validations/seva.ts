@@ -9,6 +9,7 @@ export const sevaSchema = z.object({
   pricingMode: z.enum(['fixed', 'custom', 'options']).default('fixed'),
   fixedAmount: z.coerce.number().int().positive().optional(),
   defaultAmount: z.coerce.number().int().positive().optional(),
+  amountOptions: z.array(z.coerce.number().int().positive()).optional().default([]),
   category: z.string().trim().optional().or(z.literal('')),
   imageUrl: z.string().trim().optional().or(z.literal(''))
 }).refine((data) => {
@@ -18,11 +19,13 @@ export const sevaSchema = z.object({
   if (data.pricingMode === 'custom') {
     return data.defaultAmount || data.suggestedAmount;
   }
-  // For 'options', we don't strictly require a specific fixed/default amount as it uses hardcoded denominators
+  if (data.pricingMode === 'options') {
+    return data.amountOptions && data.amountOptions.length > 0;
+  }
   return true;
 }, {
-  message: "Amount is required based on pricing mode",
-  path: ["suggestedAmount"]
+  message: "Amount is required based on pricing mode (for options, you must provide at least one valid amount).",
+  path: ["pricingMode"]
 });
 
 export type SevaInput = z.infer<typeof sevaSchema>;

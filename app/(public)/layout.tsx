@@ -8,7 +8,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   const settings = await templeSettingsRepository.getCurrentOrDefault();
 
   return (
-    <div className="flex min-h-screen flex-col flex-1 bg-[url('/assets/pattern-bg.png')] bg-fixed">
+    <div className="flex min-h-screen flex-col flex-1 bg-ivory">
       <div className="bg-background/95 min-h-screen flex flex-col flex-1">
         <DevoteeTicker />
         <PublicHeader settings={settings} />

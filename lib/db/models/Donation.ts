@@ -33,6 +33,7 @@ const donationSchema = new Schema(
 );
 
 donationSchema.index({ paymentStatus: 1, merchantTransactionId: 1 });
+donationSchema.index({ paymentStatus: 1, amount: -1, createdAt: -1 });
 donationSchema.index({ name: "text", gothra: "text", donationId: "text" });
 donationSchema.index({ createdAt: -1 });
 

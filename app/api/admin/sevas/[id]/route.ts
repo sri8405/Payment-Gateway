@@ -31,7 +31,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
       name: parsed.data.name,
       description: parsed.data.description || undefined,
       suggestedAmount: parsed.data.suggestedAmount,
-      active: parsed.data.active
+      active: parsed.data.active,
+      pricingMode: parsed.data.pricingMode,
+      fixedAmount: parsed.data.fixedAmount,
+      defaultAmount: parsed.data.defaultAmount,
+      amountOptions: parsed.data.amountOptions,
+      category: parsed.data.category,
+      imageUrl: parsed.data.imageUrl
     });
 
     await auditLogRepository.create({

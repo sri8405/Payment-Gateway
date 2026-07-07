@@ -14,13 +14,18 @@ export function SevaSelector({ sevas, value, onChange }: Props) {
     <NativeSelect value={value || ""} onChange={(event) => onChange(event.target.value)}>
       <option value="">Select seva</option>
       {sevas.map((seva) => {
-        const amountDisplay = seva.pricingMode === 'custom' 
-          ? `(Any amount)` 
-          : `(₹${seva.fixedAmount || seva.suggestedAmount})`;
+        let amountDisplay = '';
+        if (seva.pricingMode === 'options') {
+          amountDisplay = ''; // Only show name for options-based sevas
+        } else if (seva.pricingMode === 'custom') {
+          amountDisplay = ` (Any amount)`;
+        } else {
+          amountDisplay = ` (₹${seva.fixedAmount || seva.suggestedAmount})`;
+        }
           
         return (
           <option key={seva._id} value={seva._id}>
-            {seva.name} {amountDisplay}
+            {seva.name}{amountDisplay}
           </option>
         );
       })}

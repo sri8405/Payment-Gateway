@@ -328,6 +328,7 @@ export function PaymentSection({
           </p>
           <div className="flex justify-center rounded-lg border bg-white p-4">
             {qrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={qrDataUrl}
                 alt={`UPI QR code for seva booking ${donationId}`}

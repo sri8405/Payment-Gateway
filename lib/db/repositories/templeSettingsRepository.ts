@@ -78,7 +78,7 @@ export const templeSettingsRepository = {
       await connectToDatabase();
       const settings = await TempleSettings.findOne({}).sort({ updatedAt: -1 }).lean();
       return settings ? plainTempleSettings(settings) : null;
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to load temple settings");
     }
   },

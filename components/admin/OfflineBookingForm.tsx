@@ -82,7 +82,7 @@ export function OfflineBookingForm({ sevas }: Props) {
       // Optionally could redirect to a receipt print page, e.g.
       // window.open(`/donate/receipt?id=${data.donation.donationId}`, '_blank');
 
-    } catch (err) {
+    } catch {
       setError("Network error occurred while saving the booking.");
     }
   }
@@ -137,7 +137,7 @@ export function OfflineBookingForm({ sevas }: Props) {
             <Field label="Amount (₹)" error={errors.amount?.message} required>
               {isOptionsMode ? (
                 <div className="grid grid-cols-5 gap-2">
-                  {[100, 250, 500, 750, 1000].map((amt) => (
+                  {(selectedSeva.amountOptions?.length ? selectedSeva.amountOptions : [100, 250, 500, 750, 1000]).map((amt) => (
                     <Button
                       key={amt}
                       type="button"

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const uploadsDir = join(process.cwd(), "public", "uploads");
     try {
       await mkdir(uploadsDir, { recursive: true });
-    } catch (e) {
+    } catch {
       // Ignore if exists
     }
 

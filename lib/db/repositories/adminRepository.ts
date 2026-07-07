@@ -26,7 +26,7 @@ export const adminRepository = {
       await connectToDatabase();
       const admin = await Admin.findOne({ username }).lean();
       return admin ? plainAdmin(admin) : null;
-    } catch (error) {
+    } catch {
       throw new AppError("DATABASE_ERROR", "Failed to find admin");
     }
   }

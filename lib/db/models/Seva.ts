@@ -10,6 +10,7 @@ const sevaSchema = new Schema(
     pricingMode: { type: String, enum: ["fixed", "custom", "options"], default: "fixed" },
     fixedAmount: { type: Number, min: 1 },
     defaultAmount: { type: Number, min: 1 },
+    amountOptions: { type: [Number], default: [] },
     category: { type: String, trim: true },
     imageUrl: { type: String, trim: true }
   },
