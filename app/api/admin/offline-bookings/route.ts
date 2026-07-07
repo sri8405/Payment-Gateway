@@ -30,7 +30,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Amount must be exactly ₹${fixedAmount} for this Seva` }, { status: 400 });
       }
     } else if (seva.pricingMode === "options") {
-      const allowedOptions = [100, 250, 500, 750, 1000];
+      const allowedOptions = seva.amountOptions && seva.amountOptions.length > 0
+        ? seva.amountOptions
+        : [100, 250, 500, 750, 1000];
       if (!allowedOptions.includes(data.amount)) {
         return NextResponse.json({ error: "Invalid amount option selected" }, { status: 400 });
       }

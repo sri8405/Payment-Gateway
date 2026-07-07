@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'GuruSeva Admin',
   webDir: 'public',
   server: {
-    url: 'https://guruseva.vercel.app', // To be replaced with actual production URL
+    url: 'https://guru-seva.me',
     cleartext: true
   }
 };

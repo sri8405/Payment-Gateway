@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PhonePeService } from "@/lib/payment/PhonePeService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
+import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
 
 
 export async function POST(req: Request) {
@@ -15,16 +16,20 @@ export async function POST(req: Request) {
     
     let updatedDonation;
     if (result.success && result.paymentStatus === 'SUCCESS') {
+       const existingDonation = await donationRepository.findByMerchantTransactionId(merchantTransactionId);
+       const receiptNumber = existingDonation?.receiptNumber || await generateReceiptNumber();
 
        updatedDonation = await donationRepository.updatePaymentStatus(merchantTransactionId, {
          paymentStatus: 'SUCCESS',
          phonePeTransactionId: result.transactionId,
          transactionTime: new Date(),
        });
-       // Also update the main donation if needed (e.g., set receipt number, booking status)
-       await donationRepository.updateById(updatedDonation.donationId, {
-         status: 'VERIFIED'
+       
+       const { newValues } = await donationRepository.updateById(updatedDonation.donationId, {
+         status: 'VERIFIED',
+         receiptNumber
        });
+       updatedDonation = newValues;
        // A separate query might be needed to set the receipt number directly if updateById doesn't support it, 
        // but for now updatePaymentStatus handles the payment flow.
     } else {

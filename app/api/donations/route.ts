@@ -20,6 +20,25 @@ export async function POST(request: NextRequest) {
       throw new AppError("BAD_REQUEST", "Selected seva is not available");
     }
 
+    // Validate amount based on seva pricing mode to prevent client-side modifications
+    if (seva.pricingMode === "fixed") {
+      const expectedAmount = seva.fixedAmount || seva.suggestedAmount;
+      if (parsed.data.amount !== expectedAmount) {
+        throw new AppError("BAD_REQUEST", `Invalid amount for fixed pricing mode. Expected ₹${expectedAmount}`);
+      }
+    } else if (seva.pricingMode === "options") {
+      const allowedOptions = seva.amountOptions && seva.amountOptions.length > 0
+        ? seva.amountOptions
+        : [100, 250, 500, 750, 1000];
+      if (!allowedOptions.includes(parsed.data.amount)) {
+        throw new AppError("BAD_REQUEST", "Invalid amount option selected");
+      }
+    } else if (seva.pricingMode === "custom") {
+      if (parsed.data.amount <= 0) {
+        throw new AppError("BAD_REQUEST", "Amount must be greater than zero");
+      }
+    }
+
     const donationId = await generateDonationId();
     const donation = await donationRepository.create({
       donationId,

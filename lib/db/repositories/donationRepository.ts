@@ -32,7 +32,7 @@ export type DonationPlain = {
 };
 
 export type DonationUpdateInput = Partial<
-  Pick<DonationPlain, "name" | "gothra" | "mobile" | "email" | "sevaId" | "sevaName" | "amount" | "status">
+  Pick<DonationPlain, "name" | "gothra" | "mobile" | "email" | "sevaId" | "sevaName" | "amount" | "status" | "receiptNumber">
 >;
 
 export type DonationFilters = {

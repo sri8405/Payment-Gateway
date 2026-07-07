@@ -13,7 +13,12 @@ const eslintConfig = [
       "dist/**",
       "build/**",
       "logs/**",
-      "next-env.d.ts"
+      "next-env.d.ts",
+      "public/sw.js",
+      "public/workbox-*.js",
+      "public/fallback-*.js",
+      "public/swe-worker-*.js",
+      "scripts/**"
     ]
   },
   js.configs.recommended,

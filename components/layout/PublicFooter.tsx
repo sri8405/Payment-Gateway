@@ -60,7 +60,6 @@ export function PublicFooter({ settings }: { settings: TempleSettingsPlain }) {
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-saffron">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-saffron">Terms of Service</Link>
-            <Link href="/admin/login" className="hover:text-saffron">Admin Login</Link>
           </div>
         </div>
       </div>

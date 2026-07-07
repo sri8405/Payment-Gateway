@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PhonePeService } from "@/lib/payment/PhonePeService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
+import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
 
 
 export async function POST(req: Request) {
@@ -40,8 +41,12 @@ export async function POST(req: Request) {
         paymentLog: { status: paymentStatus, rawResponse: responsePayload }
       });
 
-      if (paymentStatus === "SUCCESS" && updated.status !== "VERIFIED") {
-         await donationRepository.updateById(updated.donationId, { status: "VERIFIED" });
+      if (paymentStatus === "SUCCESS" && !updated.receiptNumber) {
+         const receiptNumber = await generateReceiptNumber();
+         await donationRepository.updateById(updated.donationId, {
+           status: "VERIFIED",
+           receiptNumber
+         });
       }
     }
 

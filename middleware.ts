@@ -6,6 +6,14 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+  
+  // Enforce single production domain
+  const host = req.headers.get("host") || "";
+  if (host.includes("guruseva.vercel.app")) {
+    const targetUrl = new URL(pathname + req.nextUrl.search, "https://guru-seva.me");
+    return NextResponse.redirect(targetUrl, 301);
+  }
+
   const session = req.auth;
   const role =
     typeof session?.user?.role === "string"
@@ -44,5 +52,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icons|assets|sw.js|workbox-).*)"],
 };
