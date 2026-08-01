@@ -3,7 +3,6 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import { AudioProvider } from "@/components/providers/AudioProvider";
 import { PwaLifecycleProvider } from "@/components/providers/PwaLifecycleProvider";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
-import { PwaInstallPrompt } from "@/components/ui/PwaInstallPrompt";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({ 
@@ -51,7 +50,6 @@ export default async function RootLayout({
         <AudioProvider initialAudioUrl={settings.audioUrl || ""}>
           {children}
         </AudioProvider>
-        <PwaInstallPrompt />
       </body>
     </html>
   );

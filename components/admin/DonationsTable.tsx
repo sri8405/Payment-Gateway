@@ -312,19 +312,19 @@ export function DonationsTable({ initialRows, initialTotal, sevas, settings }: P
         
         {rows.map((donation) => (
           <div key={donation._id} className="rounded-xl border border-border/40 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="font-medium text-foreground">{donation.name}</p>
-                <p className="font-mono text-xs text-slate-500 mt-0.5">{donation.donationId}</p>
+            <div className="flex justify-between items-start mb-3 gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">{donation.name}</p>
+                <p className="font-mono text-xs text-slate-500 mt-0.5 break-all">{donation.donationId}</p>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-foreground">₹{(donation.totalPaid || donation.amount).toLocaleString('en-IN')}</p>
+              <div className="text-right flex-shrink-0">
+                <p className="font-bold text-foreground text-lg">₹{(donation.totalPaid || donation.amount).toLocaleString('en-IN')}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{new Date(donation.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
             
             <div className="mb-4">
-              <p className="text-sm text-foreground">{donation.sevaName}</p>
+              <p className="text-sm text-foreground font-medium">{donation.sevaName}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{donation.mobile}</p>
             </div>
             
@@ -333,16 +333,32 @@ export function DonationsTable({ initialRows, initialTotal, sevas, settings }: P
               <StatusPill status={donation.status} type="general" />
             </div>
             
-            <div className="flex flex-wrap gap-2 pt-3 border-t border-border/40">
-              <Button variant="outline" size="sm" className="h-8 text-xs flex-1 rounded-lg" onClick={() => { setEditingDonation(donation); setEditOpen(true); }}><Pencil className="mr-1.5 h-3 w-3" />Edit</Button>
-              <Button asChild variant="outline" size="sm" className="h-8 text-xs flex-1 rounded-lg">
-                <Link href={`/admin/donations/${donation.donationId}`}><Eye className="mr-1.5 h-3 w-3" />View</Link>
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/40">
+              <Button variant="outline" size="sm" className="h-10 text-xs rounded-lg w-full" onClick={() => { setEditingDonation(donation); setEditOpen(true); }}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-10 text-xs rounded-lg w-full">
+                <Link href={`/admin/donations/${donation.donationId}`}>
+                  <Eye className="mr-1.5 h-3.5 w-3.5" /> View
+                </Link>
               </Button>
               {donation.paymentStatus === "SUCCESS" && (
-                <div className="flex-1">
-                  <ReceiptDownload donation={donation} settings={settings} />
-                </div>
+                <>
+                  <ReceiptDownload donation={donation} settings={settings} className="h-10 text-xs rounded-lg w-full bg-saffron/10 text-saffron hover:bg-saffron/20 border-0" />
+                  <Button variant="outline" size="sm" className="h-10 text-xs rounded-lg w-full text-purple-600 hover:bg-purple-50 hover:text-purple-700" onClick={() => setRefundTarget(donation)}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Refund
+                  </Button>
+                </>
               )}
+              {cancellableStatuses.has(donation.paymentStatus) && (
+                <Button variant="outline" size="sm" className="h-10 text-xs rounded-lg w-full text-amber-600 hover:bg-amber-50 hover:text-amber-700" onClick={() => setCancelTarget(donation)}>
+                  <Ban className="mr-1.5 h-3.5 w-3.5" /> Cancel
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="h-10 text-xs rounded-lg w-full text-red-600 hover:bg-red-50 hover:text-red-700" disabled={deletingId === donation.donationId} onClick={() => confirmDelete(donation)}>
+                {deletingId === donation.donationId ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-1.5 h-3.5 w-3.5" />}
+                Delete
+              </Button>
             </div>
           </div>
         ))}

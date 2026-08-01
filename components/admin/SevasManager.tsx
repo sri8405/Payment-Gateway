@@ -103,14 +103,14 @@ export function SevasManager({ initialSevas }: Props) {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
-              <Button variant="outline" size="sm" className="rounded-lg flex-1 h-9" onClick={() => { setEditing(seva); setOpen(true); }}>
+            <div className="flex flex-wrap gap-2 pt-3 border-t border-border/40">
+              <Button variant="outline" size="sm" className="rounded-lg flex-1 h-11" onClick={() => { setEditing(seva); setOpen(true); }}>
                 <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
               </Button>
-              <Button variant={seva.active ? "secondary" : "outline"} size="sm" className={`rounded-lg flex-1 h-9 ${!seva.active && 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'}`} onClick={() => toggleActive(seva)}>
+              <Button variant={seva.active ? "secondary" : "outline"} size="sm" className={`rounded-lg flex-1 h-11 ${!seva.active && 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'}`} onClick={() => toggleActive(seva)}>
                 {seva.active ? <><PowerOff className="mr-2 h-3.5 w-3.5" /> Disable</> : <><Power className="mr-2 h-3.5 w-3.5" /> Enable</>}
               </Button>
-              <Button variant="ghost" size="icon" className="rounded-lg h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 shrink-0" onClick={() => deleteSeva(seva)}>
+              <Button variant="ghost" size="icon" className="rounded-lg h-11 w-11 text-slate-400 hover:text-red-600 hover:bg-red-50 shrink-0" onClick={() => deleteSeva(seva)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>

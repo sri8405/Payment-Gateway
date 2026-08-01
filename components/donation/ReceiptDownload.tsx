@@ -26,9 +26,10 @@ export type SanitizedDonation = {
 type Props = {
   donation: SanitizedDonation;
   settings: TempleSettingsPlain;
+  className?: string;
 };
 
-export function ReceiptDownload({ donation, settings }: Props) {
+export function ReceiptDownload({ donation, settings, className }: Props) {
   async function downloadReceipt() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -97,9 +98,10 @@ export function ReceiptDownload({ donation, settings }: Props) {
   }
 
   return (
-    <Button onClick={downloadReceipt}>
-      <Download className="h-4 w-4" />
-      Download Receipt (PDF)
+    <Button onClick={downloadReceipt} className={className}>
+      <Download className="mr-1.5 h-4 w-4" />
+      <span className="hidden sm:inline">Download Receipt (PDF)</span>
+      <span className="sm:hidden">Receipt</span>
     </Button>
   );
 }
