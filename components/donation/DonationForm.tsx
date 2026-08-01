@@ -92,7 +92,7 @@ export function DonationForm({ sevas }: Props) {
               <Input {...register("mobile")} inputMode="numeric" autoComplete="tel" className="bg-white pl-10" placeholder="10-digit mobile" />
             </div>
           </Field>
-          <Field label="Email Address (Optional)" error={errors.email?.message}>
+          <Field label="Email Address" error={errors.email?.message} required>
             <Input {...register("email")} type="email" autoComplete="email" className="bg-white" placeholder="For receiving receipts" />
           </Field>
         </div>

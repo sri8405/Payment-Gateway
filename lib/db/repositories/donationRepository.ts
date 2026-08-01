@@ -280,19 +280,22 @@ export const donationRepository = {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const [overall, today, month, uniqueDonors, successful, failed, topSeva, topDonor] = await Promise.all([
-        Donation.aggregate([{ $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }]),
         Donation.aggregate([
-          { $match: { createdAt: { $gte: startOfDay, $lt: startOfTomorrow } } },
+          { $match: { paymentStatus: 'SUCCESS' } },
           { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }
         ]),
         Donation.aggregate([
-          { $match: { createdAt: { $gte: startOfMonth } } },
+          { $match: { paymentStatus: 'SUCCESS', createdAt: { $gte: startOfDay, $lt: startOfTomorrow } } },
           { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }
         ]),
-        Donation.distinct("name"),
+        Donation.aggregate([
+          { $match: { paymentStatus: 'SUCCESS', createdAt: { $gte: startOfMonth } } },
+          { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: "$amount" } } }
+        ]),
+        Donation.distinct("name", { paymentStatus: 'SUCCESS' }),
         Donation.countDocuments({ paymentStatus: 'SUCCESS' }),
         Donation.countDocuments({ paymentStatus: 'FAILED' }),
-        Donation.aggregate([{ $group: { _id: "$sevaName", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+        Donation.aggregate([{ $match: { paymentStatus: 'SUCCESS' } }, { $group: { _id: "$sevaName", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
         Donation.aggregate([{ $match: { paymentStatus: 'SUCCESS' } }, { $sort: { amount: -1 } }, { $limit: 1 }])
       ]);
 
@@ -382,6 +385,24 @@ export const donationRepository = {
   async updateRazorpayPaymentStatus(razorpayOrderId: string, data: { paymentStatus: string, razorpayPaymentId?: string, transactionTime?: Date, paymentLog?: any }) {
     try {
       await connectToDatabase();
+      const existing = await Donation.findOne({ razorpayOrderId }).lean() as any;
+      if (!existing) {
+        throw new AppError("NOT_FOUND", "Donation not found by Razorpay order ID");
+      }
+
+      // Idempotency: If already in a terminal state (SUCCESS or FAILED), don't revert or duplicate unless necessary
+      const isTerminal = ["SUCCESS", "FAILED"].includes(existing.paymentStatus);
+      const isSameTerminalStatus = isTerminal && existing.paymentStatus === data.paymentStatus;
+      const isRevertingSuccess = existing.paymentStatus === "SUCCESS" && data.paymentStatus === "FAILED";
+
+      if (isSameTerminalStatus || isRevertingSuccess) {
+        // If it's the exact same state, or attempting to fail an already successful payment, just append logs safely
+        if (data.paymentLog) {
+          await Donation.updateOne({ razorpayOrderId }, { $push: { paymentLogs: data.paymentLog } });
+        }
+        return plainDonation(existing);
+      }
+
       const updateDoc: any = { paymentStatus: data.paymentStatus, paymentGateway: "Razorpay" };
       if (data.razorpayPaymentId) {
         updateDoc.razorpayPaymentId = data.razorpayPaymentId;

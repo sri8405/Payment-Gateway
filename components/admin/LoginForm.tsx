@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2, AlertCircle } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -91,18 +91,51 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      {error ? <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
-      <div className="space-y-2">
-        <Label htmlFor="username">Username</Label>
-        <Input id="username" name="username" autoComplete="username" required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
-      </div>
-      <Button type="submit" className="w-full bg-saffron hover:bg-saffron/90 text-white" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
+    <form onSubmit={submit} className="space-y-6">
+      {error ? (
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 animate-in fade-in slide-in-from-top-2">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          {error}
+        </div>
+      ) : null}
       
+      <div className="space-y-4">
+        <div className="space-y-2 text-left">
+          <Label htmlFor="username" className="text-sm font-medium text-foreground">Username</Label>
+          <Input 
+            id="username" 
+            name="username" 
+            autoComplete="username" 
+            required 
+            className="rounded-xl focus-visible:ring-saffron h-11"
+            placeholder="Enter your username"
+          />
+        </div>
+        <div className="space-y-2 text-left">
+          <Label htmlFor="password" className="text-sm font-medium text-foreground">Password</Label>
+          <Input 
+            id="password" 
+            name="password" 
+            type="password" 
+            autoComplete="current-password" 
+            required 
+            className="rounded-xl focus-visible:ring-saffron h-11"
+            placeholder="Enter your password"
+          />
+        </div>
+      </div>
+      
+      <Button 
+        type="submit" 
+        className="w-full h-11 rounded-xl bg-saffron hover:bg-saffron/90 text-white font-semibold text-[15px] shadow-sm transition-all" 
+        disabled={loading}
+      >
+        {loading ? (
+          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Authenticating...</>
+        ) : (
+          "Sign In to Dashboard"
+        )}
+      </Button>
     </form>
   );
 }

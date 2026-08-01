@@ -70,34 +70,8 @@ export async function POST(req: Request) {
         const donation = await donationRepository.findByRazorpayOrderId(payment.order_id);
         
         if (donation) {
-          const expectedAmount = Math.round((donation.totalPaid || donation.amount) * 100);
-          
-          if (payment.amount !== expectedAmount) {
-            console.error(`Amount mismatch for order ${payment.order_id}: Expected ${expectedAmount}, got ${payment.amount}. Initiating refund.`);
-            
-            await donationRepository.updateRazorpayPaymentStatus(payment.order_id, {
-              paymentStatus: "FAILED",
-              paymentLog: { 
-                status: "FAILED", 
-                rawResponse: { 
-                  source: "webhook_amount_mismatch",
-                  orderId: payment.order_id, 
-                  paymentId: payment.id,
-                  expected: expectedAmount,
-                  actual: payment.amount
-                } 
-              },
-            });
-            
-            try {
-              await RazorpayService.refundPayment(payment.id, payment.amount, {
-                reason: "Amount mismatch detected by webhook",
-                donationId: donation.donationId
-              });
-            } catch (refundError: any) {
-              console.error("Auto-refund failed for amount mismatch:", refundError?.message);
-            }
-          } else {
+          if (donation.paymentStatus === "SUCCESS") {
+            // Already verified and successful, safely update capture flags via idempotent method
             await processRazorpaySuccess({
               razorpayOrderId: payment.order_id,
               razorpayPaymentId: payment.id,
@@ -106,6 +80,44 @@ export async function POST(req: Request) {
               source: "webhook",
               rawResponse: { orderId: payment.order_id, paymentId: payment.id, status: payment.status },
             });
+          } else {
+            const expectedAmount = Math.round((donation.totalPaid || donation.amount) * 100);
+            
+            if (payment.amount !== expectedAmount) {
+              console.error(`Amount mismatch for order ${payment.order_id}: Expected ${expectedAmount}, got ${payment.amount}. Initiating refund.`);
+              
+              await donationRepository.updateRazorpayPaymentStatus(payment.order_id, {
+                paymentStatus: "FAILED",
+                paymentLog: { 
+                  status: "FAILED", 
+                  rawResponse: { 
+                    source: "webhook_amount_mismatch",
+                    orderId: payment.order_id, 
+                    paymentId: payment.id,
+                    expected: expectedAmount,
+                    actual: payment.amount
+                  } 
+                },
+              });
+              
+              try {
+                await RazorpayService.refundPayment(payment.id, payment.amount, {
+                  reason: "Amount mismatch detected by webhook",
+                  donationId: donation.donationId
+                });
+              } catch (refundError: any) {
+                console.error("Auto-refund failed for amount mismatch:", refundError?.message);
+              }
+            } else {
+              await processRazorpaySuccess({
+                razorpayOrderId: payment.order_id,
+                razorpayPaymentId: payment.id,
+                signatureVerified: false,
+                captured: payment.status === "captured",
+                source: "webhook",
+                rawResponse: { orderId: payment.order_id, paymentId: payment.id, status: payment.status },
+              });
+            }
           }
         }
       }

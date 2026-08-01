@@ -2,34 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: 40 45% 97%;
-  --foreground: 20 30% 15%;
-  --card: 40 30% 99%;
-  --card-foreground: 20 30% 15%;
-  --primary: 24 85% 42%;
-  --primary-foreground: 40 50% 97%;
-  --secondary: 40 70% 55%;
-  --secondary-foreground: 20 50% 18%;
-  --muted: 35 25% 91%;
-  --muted-foreground: 20 15% 45%;
-  --accent: 20 60% 40%;
-  --accent-foreground: 40 50% 97%;
-  --destructive: 0 65% 48%;
+  --background: 35 20% 98%; /* Soft Beige / Off-white */
+  --foreground: 222 47% 11%; /* Slate / Dark */
+  --card: 0 0% 100%; /* White */
+  --card-foreground: 222 47% 11%;
+  --primary: 25 95% 53%; /* #F97316 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%; /* Light Gray */
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 25 95% 53%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 35 25% 85%;
-  --input: 35 25% 85%;
-  --ring: 24 85% 42%;
-  --success: 145 60% 36%;
-  --success-foreground: 0 0% 100%;
-  --saffron: 24 85% 42%;
-  --gold: 40 70% 55%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 25 95% 53%;
+  
+  /* Brand Specific */
+  --saffron: 25 95% 53%; /* #F97316 */
+  --gold: 38 92% 50%;
   --maroon: 345 75% 25%;
-  --copper: 20 60% 40%;
-  --ivory: 40 45% 97%;
-  --sandstone: 35 30% 78%;
+  --copper: 15 70% 40%;
+  --ivory: 40 45% 98%;
+  --sandstone: 35 30% 85%;
 }
 
 * {

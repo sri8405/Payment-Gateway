@@ -14,17 +14,14 @@ type Props = {
 
 export function ReceiptSearchForm({ settings }: Props) {
   const [mobile, setMobile] = useState("");
-  const [name, setName] = useState("");
-  const [gothra, setGothra] = useState("");
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<SanitizedDonation[] | null>(null);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!mobile || !name || !gothra) {
-      setError("Please fill in all fields to find your receipts.");
+    if (!mobile) {
+      setError("Please enter your mobile number to find your receipts.");
       return;
     }
 
@@ -38,7 +35,7 @@ export function ReceiptSearchForm({ settings }: Props) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mobile, name, gothra }),
+        body: JSON.stringify({ mobile }),
       });
 
       const data = await response.json();
@@ -57,18 +54,18 @@ export function ReceiptSearchForm({ settings }: Props) {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      <Card className="border-saffron/20 shadow-xl overflow-hidden rounded-2xl bg-white/95 backdrop-blur">
+      <Card className="border-saffron/20 shadow-xl overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md transition-shadow hover:shadow-2xl">
         <CardHeader className="bg-gradient-to-r from-saffron/10 to-gold/10 border-b border-saffron/20 pb-6">
-          <CardTitle className="text-xl font-serif text-copper">Find My Receipts</CardTitle>
-          <CardDescription>
-            Enter the exact details used during your donation to retrieve your receipts.
+          <CardTitle className="text-2xl font-serif text-copper">Find My Receipts</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Enter the mobile number used during your donation to retrieve your receipts.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-8">
           <form onSubmit={handleSearch} className="space-y-6">
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">
+                <label className="text-sm font-medium text-foreground mb-2 block">
                   Mobile Number
                 </label>
                 <Input
@@ -76,38 +73,14 @@ export function ReceiptSearchForm({ settings }: Props) {
                   placeholder="e.g. 9876543210"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                  Devotee Name
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Enter the name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                  Gothra
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Enter the gothra"
-                  value={gothra}
-                  onChange={(e) => setGothra(e.target.value)}
-                  className="w-full"
+                  className="w-full rounded-xl focus:ring-saffron focus:border-saffron bg-background/50"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-                <AlertCircle size={16} />
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-4 rounded-xl">
+                <AlertCircle size={16} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
@@ -115,16 +88,16 @@ export function ReceiptSearchForm({ settings }: Props) {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-saffron hover:bg-saffron/90 text-white"
+              className="w-full bg-saffron hover:bg-saffron/90 text-white rounded-xl py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Searching...
                 </>
               ) : (
                 <>
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="mr-2 h-5 w-5" />
                   Find My Receipts
                 </>
               )}
@@ -134,24 +107,40 @@ export function ReceiptSearchForm({ settings }: Props) {
       </Card>
 
       {results && results.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-serif font-bold text-foreground">Matching Receipts</h2>
-          <div className="grid gap-4">
-            {results.map((receipt) => (
-              <Card key={receipt.donationId} className="border-border">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-lg">{receipt.sevaName}</h3>
-                      <div className="text-sm text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-1">
-                        <span>Date: {new Date(receipt.createdAt).toLocaleDateString()}</span>
-                        <span>Amount: ₹{(receipt.totalPaid || receipt.amount).toFixed(2)}</span>
-                        <span>Name: {receipt.name}</span>
-                        <span>Gothra: {receipt.gothra || "-"}</span>
-                        <span className="col-span-2">Receipt No: {receipt.receiptNumber || "-"}</span>
+        <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+          <h2 className="text-2xl font-serif font-bold text-foreground flex items-center gap-2">
+            <span className="w-8 h-1 bg-gradient-to-r from-saffron to-gold rounded-full"></span>
+            Matching Receipts
+          </h2>
+          <div className="grid gap-6">
+            {results.map((receipt, index) => (
+              <Card key={receipt.donationId} className="border-border shadow-md hover:shadow-lg transition-all rounded-2xl overflow-hidden animate-fade-in-up" style={{ animationDelay: `${(index + 1) * 100}ms` }}>
+                <CardContent className="p-0">
+                  <div className="flex flex-col sm:flex-row justify-between items-stretch">
+                    <div className="p-6 space-y-3 flex-grow bg-card">
+                      <h3 className="font-semibold text-xl text-copper font-serif">{receipt.sevaName}</h3>
+                      <div className="text-sm text-muted-foreground grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-wider opacity-70">Date</span>
+                          <span className="font-medium text-foreground">{new Date(receipt.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-wider opacity-70">Amount</span>
+                          <span className="font-medium text-saffron">₹{(receipt.totalPaid || receipt.amount).toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-wider opacity-70">Name</span>
+                          <span className="font-medium text-foreground">{receipt.name}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-wider opacity-70">Receipt No</span>
+                          <span className="font-medium text-foreground">{receipt.receiptNumber || "-"}</span>
+                        </div>
                       </div>
                     </div>
-                    <ReceiptDownload donation={receipt} settings={settings} />
+                    <div className="p-6 bg-muted/20 flex items-center justify-center border-t sm:border-t-0 sm:border-l border-border/50">
+                      <ReceiptDownload donation={receipt} settings={settings} />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -161,10 +150,13 @@ export function ReceiptSearchForm({ settings }: Props) {
       )}
 
       {results && results.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-2xl border border-border/50">
-          <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">
-            No completed donations were found with the provided information.
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-card rounded-2xl border border-border shadow-sm animate-fade-in-up">
+          <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-6">
+            <AlertCircle className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-foreground mb-2">No Receipts Found</h3>
+          <p className="text-muted-foreground max-w-md">
+            No completed donations were found with the provided mobile number. Please check the number and try again.
           </p>
         </div>
       )}

@@ -16,6 +16,7 @@ import {
 } from "@/lib/validations/templeSettings";
 import type { TempleSettingsPlain } from "@/lib/db/repositories/templeSettingsRepository";
 import { FileUpload } from "@/components/admin/FileUpload";
+import { CheckCircle2, Loader2, Save, XCircle } from "lucide-react";
 
 type Props = {
   initialSettings: TempleSettingsPlain;
@@ -97,152 +98,169 @@ export function TempleSettingsForm({ initialSettings }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-5xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/40">
+        <div>
+          <h2 className="font-serif text-2xl font-bold text-foreground">Temple Settings</h2>
+          <p className="text-sm text-muted-foreground mt-1">Configure global preferences, branding, and integrations.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="outline" className="rounded-xl w-full sm:w-auto" onClick={() => { reset(defaultValues); setToast(null); }} disabled={isSubmitting || !isDirty}>
+            Discard Changes
+          </Button>
+          <Button type="submit" className="rounded-xl bg-saffron hover:bg-saffron/90 w-full sm:w-auto shadow-sm text-white" disabled={isSubmitting || !isDirty}>
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save Changes</>}
+          </Button>
+        </div>
+      </div>
+
       {toast ? (
-        <div
-          role="status"
-          className={`rounded-lg border px-4 py-3 text-sm font-medium ${
-            toast.type === "success"
-              ? "border-green-300 bg-green-50 text-green-800"
-              : "border-destructive/30 bg-destructive/10 text-destructive"
-          }`}
-        >
+        <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium animate-in fade-in slide-in-from-top-2 ${toast.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {toast.type === "success" ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <XCircle className="h-4 w-4 shrink-0" />}
           {toast.message}
         </div>
       ) : null}
 
-      {/* Temple Information */}
-      <Section title="🏛️ Temple Information">
-        <Field label="Temple Name" error={errors.templeName?.message} required>
-          <Input {...register("templeName")} />
-        </Field>
-        <Field label="Description" error={errors.templeDescription?.message}>
-          <Textarea {...register("templeDescription")} />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Contact Number" error={errors.contactNumber?.message}>
-            <Input {...register("contactNumber")} />
-          </Field>
-          <Field label="Email" error={errors.email?.message}>
-            <Input type="email" {...register("email")} />
-          </Field>
-        </div>
-        <Field label="Address" error={errors.address?.message}>
-          <Textarea {...register("address")} />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Temple Timings" error={errors.templeTimings?.message}>
-            <Input {...register("templeTimings")} placeholder="e.g., 6:00 AM - 9:00 PM" />
-          </Field>
-          <Field label="Support Contact" error={errors.supportContact?.message}>
-            <Input {...register("supportContact")} />
-          </Field>
-        </div>
-      </Section>
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          <Section title="🏛️ General Information" description="Basic details about the temple that will be displayed publicly.">
+            <Field label="Temple Name" error={errors.templeName?.message} required>
+              <Input className="rounded-xl focus-visible:ring-saffron" {...register("templeName")} />
+            </Field>
+            <Field label="Description" error={errors.templeDescription?.message}>
+              <Textarea className="rounded-xl focus-visible:ring-saffron resize-none min-h-[100px]" {...register("templeDescription")} />
+            </Field>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Contact Number" error={errors.contactNumber?.message}>
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("contactNumber")} />
+              </Field>
+              <Field label="Email Address" error={errors.email?.message}>
+                <Input className="rounded-xl focus-visible:ring-saffron" type="email" {...register("email")} />
+              </Field>
+            </div>
+            <Field label="Physical Address" error={errors.address?.message}>
+              <Textarea className="rounded-xl focus-visible:ring-saffron resize-none" {...register("address")} />
+            </Field>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Temple Timings" error={errors.templeTimings?.message}>
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("templeTimings")} placeholder="e.g., 6:00 AM - 9:00 PM" />
+              </Field>
+              <Field label="Support Contact" error={errors.supportContact?.message}>
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("supportContact")} placeholder="e.g., Support phone or email" />
+              </Field>
+            </div>
+          </Section>
 
-      {/* Branding */}
-      <Section title="🎨 Branding">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Logo Image" error={errors.logoUrl?.message}>
-            <FileUpload 
-              value={watch("logoUrl") || ""}
-              onChange={(url) => setValue("logoUrl", url, { shouldDirty: true, shouldValidate: true })}
-              accept="image/*"
-              label="Upload Logo"
-            />
-          </Field>
-          <Field label="Banner Image" error={errors.bannerUrl?.message}>
-            <FileUpload 
-              value={watch("bannerUrl") || ""}
-              onChange={(url) => setValue("bannerUrl", url, { shouldDirty: true, shouldValidate: true })}
-              accept="image/*"
-              label="Upload Banner"
-            />
-          </Field>
-        </div>
-        <Field label="Website Footer Text" error={errors.websiteFooter?.message}>
-          <Input {...register("websiteFooter")} />
-        </Field>
-        <Field label="Receipt Footer Text" error={errors.receiptFooter?.message}>
-          <Textarea {...register("receiptFooter")} />
-        </Field>
-      </Section>
+          <Section title="💳 Payment Configuration" description="Set up how you receive UPI payments and handle receipts.">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="UPI ID / VPA" error={errors.upiId?.message} required>
+                <Input className="rounded-xl focus-visible:ring-saffron font-medium" {...register("upiId")} placeholder="username@bank" />
+              </Field>
+              <Field label="UPI Display Name" error={errors.upiDisplayName?.message} required>
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("upiDisplayName")} />
+              </Field>
+            </div>
+            <Field label="Receiver Name (Internal)" error={errors.receiverName?.message} required>
+              <Input className="rounded-xl focus-visible:ring-saffron" {...register("receiverName")} />
+            </Field>
+            <Field label="Default Payment Intent App">
+              <NativeSelect className="rounded-xl focus-visible:ring-saffron" {...register("defaultPaymentApp")}>
+                {DEFAULT_PAYMENT_APP_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          </Section>
 
-      {/* Payment Settings */}
-      <Section title="💳 UPI Payment Settings">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="UPI ID" error={errors.upiId?.message} required>
-            <Input {...register("upiId")} placeholder="username@bank" />
-          </Field>
-          <Field label="UPI Display Name" error={errors.upiDisplayName?.message} required>
-            <Input {...register("upiDisplayName")} />
-          </Field>
-        </div>
-        <Field label="Receiver Name" error={errors.receiverName?.message} required>
-          <Input {...register("receiverName")} />
-        </Field>
-        <Field label="Default Payment App">
-          <NativeSelect {...register("defaultPaymentApp")}>
-            {DEFAULT_PAYMENT_APP_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </NativeSelect>
-        </Field>
-      </Section>
+          <Section title="🌐 Social Media Presence" description="Links to your official social media profiles.">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Facebook">
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("socialMediaLinks.facebook")} placeholder="https://facebook.com/..." />
+              </Field>
+              <Field label="Instagram">
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("socialMediaLinks.instagram")} placeholder="https://instagram.com/..." />
+              </Field>
+              <Field label="YouTube">
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("socialMediaLinks.youtube")} placeholder="https://youtube.com/..." />
+              </Field>
+              <Field label="Twitter / X">
+                <Input className="rounded-xl focus-visible:ring-saffron" {...register("socialMediaLinks.twitter")} placeholder="https://twitter.com/..." />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Official Website">
+                  <Input className="rounded-xl focus-visible:ring-saffron" {...register("socialMediaLinks.website")} placeholder="https://..." />
+                </Field>
+              </div>
+            </div>
+          </Section>
 
-      {/* Social Media */}
-      <Section title="🌐 Social Media">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Facebook">
-            <Input {...register("socialMediaLinks.facebook")} placeholder="https://facebook.com/..." />
-          </Field>
-          <Field label="Instagram">
-            <Input {...register("socialMediaLinks.instagram")} placeholder="https://instagram.com/..." />
-          </Field>
-          <Field label="YouTube">
-            <Input {...register("socialMediaLinks.youtube")} placeholder="https://youtube.com/..." />
-          </Field>
-          <Field label="Twitter">
-            <Input {...register("socialMediaLinks.twitter")} placeholder="https://twitter.com/..." />
-          </Field>
-          <Field label="Website">
-            <Input {...register("socialMediaLinks.website")} placeholder="https://..." />
-          </Field>
         </div>
-      </Section>
 
-      {/* Audio */}
-      <Section title="🔔 Devotional Audio">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Devotional Audio File">
-            <FileUpload 
-              value={watch("audioUrl") || ""}
-              onChange={(url) => setValue("audioUrl", url, { shouldDirty: true, shouldValidate: true })}
-              accept="audio/*"
-              label="Upload Audio"
-            />
-          </Field>
+        {/* Sidebar Column */}
+        <div className="space-y-8">
+          
+          <Section title="🎨 Visual Branding" description="Manage logos, banners, and footer text.">
+            <div className="space-y-6">
+              <Field label="Temple Logo" error={errors.logoUrl?.message}>
+                <div className="rounded-xl overflow-hidden border border-border/40">
+                  <FileUpload 
+                    value={watch("logoUrl") || ""}
+                    onChange={(url) => setValue("logoUrl", url, { shouldDirty: true, shouldValidate: true })}
+                    accept="image/*"
+                    label="Upload Logo"
+                  />
+                </div>
+              </Field>
+              <Field label="Hero Banner" error={errors.bannerUrl?.message}>
+                <div className="rounded-xl overflow-hidden border border-border/40">
+                  <FileUpload 
+                    value={watch("bannerUrl") || ""}
+                    onChange={(url) => setValue("bannerUrl", url, { shouldDirty: true, shouldValidate: true })}
+                    accept="image/*"
+                    label="Upload Banner"
+                  />
+                </div>
+              </Field>
+              <Field label="Website Footer Text" error={errors.websiteFooter?.message}>
+                <Textarea className="rounded-xl focus-visible:ring-saffron resize-none min-h-[80px]" {...register("websiteFooter")} placeholder="Copyright info, etc." />
+              </Field>
+              <Field label="Receipt Footer Text" error={errors.receiptFooter?.message}>
+                <Textarea className="rounded-xl focus-visible:ring-saffron resize-none min-h-[80px]" {...register("receiptFooter")} placeholder="Thank you message for printed receipts." />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="🔔 Ambience & Audio" description="Background devotional music settings.">
+            <Field label="Devotional Audio File">
+              <div className="rounded-xl overflow-hidden border border-border/40">
+                <FileUpload 
+                  value={watch("audioUrl") || ""}
+                  onChange={(url) => setValue("audioUrl", url, { shouldDirty: true, shouldValidate: true })}
+                  accept="audio/*"
+                  label="Upload Audio (MP3)"
+                />
+              </div>
+            </Field>
+          </Section>
+
         </div>
-      </Section>
-
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? "Saving..." : "Save Changes"}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => { reset(defaultValues); setToast(null); }} disabled={isSubmitting || !isDirty}>
-          Reset
-        </Button>
       </div>
     </form>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-xl border border-gold/15 bg-white p-5">
-      <h2 className="font-serif text-lg font-semibold text-copper">{title}</h2>
-      {children}
+    <section className="rounded-2xl border border-border/40 bg-white overflow-hidden shadow-sm">
+      <div className="border-b border-border/40 bg-slate-50/50 px-6 py-4">
+        <h3 className="font-serif text-lg font-bold text-foreground">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+      </div>
+      <div className="p-6 space-y-6">
+        {children}
+      </div>
     </section>
   );
 }
@@ -251,14 +269,14 @@ function Field({ label, error, hint, required, children }: {
   label: string; error?: string; hint?: string; required?: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <Label>
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium text-foreground">
         {label}
         {required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
       {children}
-      {hint && !error ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
+      {hint && !error ? <p className="text-xs text-muted-foreground/80 font-medium">{hint}</p> : null}
+      {error ? <p className="text-xs font-medium text-destructive" role="alert">{error}</p> : null}
     </div>
   );
 }

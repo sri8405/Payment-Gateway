@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { sevaRepository } from "@/lib/db/repositories/sevaRepository";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
-import { ChevronRight, CalendarDays, HeartHandshake, Sparkles } from "lucide-react";
+import { ChevronRight, CalendarDays, HeartHandshake, Sparkles, MapPin, Phone, Mail } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,81 +20,113 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Hero Section */}
-      <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-        {/* Background Image with Parallax effect */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-saffron to-gold">
-          {settings.bannerUrl && (
-            <Image
-              src={settings.bannerUrl}
-              alt="Temple Banner"
-              fill
-              className="object-cover object-center animate-pulse-glow"
-              priority
-              unoptimized
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"></div>
-          <div className="absolute inset-0 bg-black/30"></div>
+      {/* Hero Section - Heritage Premium */}
+      <section className="relative h-[100vh] min-h-[600px] lg:min-h-[700px] w-full flex flex-col justify-end items-center overflow-hidden pb-12 sm:pb-20">
+        
+        {/* Background Image Container */}
+        <div className="absolute inset-0 z-0 bg-black">
+          <Image
+            src="/hero-banner.png"
+            alt="Divine Abode"
+            fill
+            /* 
+              Aggressive Focal Point Positioning:
+              Prioritize the absolute top-left across all devices to ensure Guruji's forehead, beard, and eyes are never cropped.
+            */
+            className="object-cover object-left-top sm:object-[20%_5%] md:object-[25%_10%] lg:object-[20%_15%]"
+            priority
+            unoptimized
+          />
+          {/* 
+            Soft Bottom Gradient:
+            Provides contrast only for the bottom-centered text, leaving the top and middle untouched.
+          */}
+          <div className="absolute inset-x-0 bottom-0 h-[60%] sm:h-[50%] bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none"></div>
         </div>
 
-        <div className="container relative z-10 mx-auto px-4 text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-saffron/20 border border-saffron/30 text-saffron-foreground backdrop-blur-md mb-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <Sparkles size={16} className="text-gold" />
-            <span className="text-sm font-medium text-white tracking-wider uppercase">Welcome to the Divine Abode</span>
-            <Sparkles size={16} className="text-gold" />
-          </div>
+        {/* Hero Content Area - Bottom Centered */}
+        <div className="relative z-10 container mx-auto px-6 w-full flex flex-col items-center text-center animate-fade-in-up">
           
-          <h1 className="text-5xl sm:text-6xl md:text-8xl font-serif font-bold text-white mb-6 drop-shadow-xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            {settings.templeName}
-          </h1>
-          
-          <p className="max-w-2xl text-lg sm:text-2xl text-ivory/90 mb-10 font-light drop-shadow-md animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-            {settings.templeDescription || "Book your sevas online and seek the divine blessings from anywhere in the world."}
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-            <Link 
-              href="/donate" 
-              className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-saffron to-gold px-8 py-4 text-lg font-bold text-white rounded-full overflow-hidden shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1"
-            >
-              <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              <span>Book Seva Now</span>
-              <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+          <div className="max-w-4xl w-full flex flex-col items-center">
+            
+            {/* Spiritual Motif */}
+            <div className="inline-flex items-center gap-4 mb-6">
+              <span className="w-10 sm:w-16 h-[1px] bg-saffron drop-shadow-md"></span>
+              <span className="text-xs sm:text-sm font-semibold text-saffron tracking-[0.25em] uppercase font-serif drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                Seek Divine Grace
+              </span>
+              <span className="w-10 sm:w-16 h-[1px] bg-saffron drop-shadow-md"></span>
+            </div>
+            
+            {/* Heading - Cinematic, Centered, Constrained to 2 lines */}
+            <h1 className="text-4xl sm:text-6xl lg:text-[5rem] font-serif font-medium text-white mb-6 leading-[1.1] tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] max-w-3xl">
+              {settings.templeName}
+            </h1>
+            
+            {/* Devotional Subtitle */}
+            <p className="text-lg sm:text-xl md:text-2xl text-white/95 mb-10 font-light leading-[1.6] drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] font-sans max-w-2xl">
+              Experience the profound peace of His presence. Participate in sacred sevas and receive abundant blessings.
+            </p>
+            
+            {/* Buttons - Centered */}
+            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto justify-center">
+              <Link 
+                href="/donate" 
+                className="group relative inline-flex items-center justify-center gap-3 bg-saffron hover:bg-saffron/90 px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-white rounded-full overflow-hidden shadow-[0_8px_24px_rgba(249,115,22,0.4)] transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto"
+              >
+                <span>Book Seva</span>
+                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link 
+                href="/find-my-receipts" 
+                className="group relative inline-flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-white rounded-full transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_24px_rgba(0,0,0,0.4)] w-full sm:w-auto"
+              >
+                <span>Find My Receipts</span>
+              </Link>
+            </div>
+            
           </div>
         </div>
       </section>
 
       {/* Featured Sevas Section */}
-      <section className="py-20 relative z-20 bg-background">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-serif font-bold text-saffron mb-4">Divine Offerings</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mb-6"></div>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Choose from our sacred sevas and participate in the temple's daily rituals. 
-              Your offerings support the temple's spiritual and charitable activities.
-            </p>
+      <section className="py-24 relative z-20 bg-background">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">Sacred Offerings</h2>
+              <p className="text-muted-foreground max-w-2xl text-lg">
+                Choose from our sacred sevas and participate in the temple's daily rituals. 
+                Your offerings support the temple's spiritual and charitable activities.
+              </p>
+            </div>
+            {sevas.length > 3 && (
+              <Link 
+                href="/donate" 
+                className="hidden md:inline-flex items-center gap-2 text-saffron font-semibold hover:text-saffron/80 transition-colors"
+              >
+                View All Offerings <ChevronRight size={18} />
+              </Link>
+            )}
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
             {featuredSevas.map((seva, index) => (
               <div 
                 key={seva._id} 
-                className="group relative bg-card rounded-2xl p-6 border shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 flex flex-col h-full animate-fade-in-up overflow-hidden"
+                className="group relative bg-card rounded-3xl p-8 border border-border/50 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 flex flex-col h-full animate-fade-in-up"
                 style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-saffron to-gold transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                <h3 className="text-2xl font-serif font-bold text-foreground mb-3">{seva.name}</h3>
-                <p className="text-muted-foreground flex-grow mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-saffron/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-4 relative z-10">{seva.name}</h3>
+                <p className="text-muted-foreground flex-grow mb-8 relative z-10 leading-relaxed">
                   {seva.description || "A sacred offering to seek divine blessings."}
                 </p>
                 
-                <div className="pt-4 border-t border-border flex items-center justify-between mt-auto">
+                <div className="pt-6 border-t border-border/50 flex items-center justify-between mt-auto relative z-10">
                   <div className="flex flex-col">
-                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Offering</span>
-                    <span className="text-lg font-bold text-copper">
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">Offering</span>
+                    <span className="text-xl font-bold text-saffron">
                       {seva.pricingMode === 'custom' 
                         ? `Any amount` 
                         : `₹${seva.fixedAmount || seva.suggestedAmount}`}
@@ -102,9 +134,9 @@ export default async function HomePage() {
                   </div>
                   <Link 
                     href={`/donate?seva=${seva._id}`}
-                    className="p-3 bg-secondary/20 rounded-full text-secondary-foreground hover:bg-saffron hover:text-white transition-colors"
+                    className="h-12 w-12 flex items-center justify-center bg-saffron/10 rounded-full text-saffron group-hover:bg-saffron group-hover:text-white transition-colors"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={24} />
                   </Link>
                 </div>
               </div>
@@ -112,12 +144,12 @@ export default async function HomePage() {
           </div>
 
           {sevas.length > 3 && (
-            <div className="mt-12 text-center">
+            <div className="mt-12 text-center md:hidden">
               <Link 
                 href="/donate" 
-                className="inline-flex items-center gap-2 text-saffron font-medium hover:text-gold transition-colors"
+                className="inline-flex items-center gap-2 text-saffron font-semibold"
               >
-                View all {sevas.length} sevas <ChevronRight size={16} />
+                View All Offerings <ChevronRight size={18} />
               </Link>
             </div>
           )}
@@ -125,60 +157,69 @@ export default async function HomePage() {
       </section>
 
       {/* Features/Info Section */}
-      <section className="py-20 relative bg-muted/30 temple-border-top temple-border-bottom">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h2 className="text-4xl font-serif font-bold text-foreground">Why Book Online?</h2>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-saffron/10 flex items-center justify-center shrink-0">
-                    <CalendarDays className="text-saffron" size={24} />
+      <section className="py-24 relative bg-card border-t border-border/50">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-10">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Why Book Online?</h2>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  We've made it simple and secure to participate in temple sevas from anywhere in the world.
+                </p>
+              </div>
+              
+              <div className="space-y-8">
+                <div className="flex gap-6">
+                  <div className="w-14 h-14 rounded-2xl bg-saffron/10 flex items-center justify-center shrink-0 text-saffron">
+                    <CalendarDays size={28} />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold">Secure your slot instantly</h4>
-                    <p className="text-muted-foreground">Book sevas from anywhere, anytime. Instant confirmation via SMS and Email.</p>
+                    <h4 className="text-xl font-bold font-serif mb-2">Secure your slot instantly</h4>
+                    <p className="text-muted-foreground leading-relaxed">Book sevas from anywhere, anytime. Instant confirmation via SMS and Email.</p>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-saffron/10 flex items-center justify-center shrink-0">
-                    <HeartHandshake className="text-saffron" size={24} />
+                <div className="flex gap-6">
+                  <div className="w-14 h-14 rounded-2xl bg-saffron/10 flex items-center justify-center shrink-0 text-saffron">
+                    <HeartHandshake size={28} />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold">100% Transparent</h4>
-                    <p className="text-muted-foreground">Direct contribution to the temple trust. Official receipts generated immediately.</p>
+                    <h4 className="text-xl font-bold font-serif mb-2">100% Transparent</h4>
+                    <p className="text-muted-foreground leading-relaxed">Direct contribution to the temple trust. Official receipts generated immediately.</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="bg-card rounded-3xl p-8 border shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-saffron/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-              <h3 className="text-2xl font-serif font-bold mb-6 text-copper border-b pb-4">Temple Information</h3>
-              <div className="space-y-4 text-foreground/80">
+            <div className="bg-background rounded-[2.5rem] p-10 border border-border/50 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-saffron/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+              <h3 className="text-3xl font-serif font-bold mb-8 text-foreground">Temple Information</h3>
+              <div className="space-y-6 text-muted-foreground relative z-10">
                 {settings.contactNumber && (
-                  <p className="flex items-start gap-3">
-                    <span className="font-medium min-w-20">Contact:</span> 
-                    <span>{settings.contactNumber}</span>
-                  </p>
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 p-2 bg-card rounded-lg text-saffron"><Phone size={20} /></div>
+                    <div>
+                      <span className="block text-sm font-semibold uppercase tracking-wider mb-1">Contact</span>
+                      <span className="text-foreground text-lg">{settings.contactNumber}</span>
+                    </div>
+                  </div>
                 )}
                 {settings.email && (
-                  <p className="flex items-start gap-3">
-                    <span className="font-medium min-w-20">Email:</span> 
-                    <span>{settings.email}</span>
-                  </p>
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 p-2 bg-card rounded-lg text-saffron"><Mail size={20} /></div>
+                    <div>
+                      <span className="block text-sm font-semibold uppercase tracking-wider mb-1">Email</span>
+                      <span className="text-foreground text-lg">{settings.email}</span>
+                    </div>
+                  </div>
                 )}
                 {settings.address && (
-                  <p className="flex items-start gap-3">
-                    <span className="font-medium min-w-20">Address:</span> 
-                    <span>{settings.address}</span>
-                  </p>
-                )}
-                {settings.templeTimings && (
-                  <p className="flex items-start gap-3">
-                    <span className="font-medium min-w-20">Timings:</span> 
-                    <span>{settings.templeTimings}</span>
-                  </p>
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 p-2 bg-card rounded-lg text-saffron"><MapPin size={20} /></div>
+                    <div>
+                      <span className="block text-sm font-semibold uppercase tracking-wider mb-1">Address</span>
+                      <span className="text-foreground text-lg leading-relaxed">{settings.address}</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

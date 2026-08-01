@@ -9,27 +9,16 @@ export async function POST(req: Request) {
     if (rateLimitResponse) return rateLimitResponse;
     
     const body = await req.json().catch(() => ({}));
-    const { mobile, name, gothra } = body;
+    const { mobile } = body;
 
-    if (!mobile || !name || !gothra) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    if (!mobile) {
+      return NextResponse.json({ error: "Mobile number is required." }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    // Escape special regex characters in name and gothra
-    const escapeRegex = (string: string) => {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-    };
-
-    // Case-insensitive, ignoring leading/trailing spaces
-    const nameRegex = new RegExp(`^\\s*${escapeRegex(name.trim())}\\s*$`, "i");
-    const gothraRegex = new RegExp(`^\\s*${escapeRegex(gothra.trim())}\\s*$`, "i");
-
     const donations = await Donation.find({
       mobile: mobile.trim(),
-      name: nameRegex,
-      gothra: gothraRegex,
       paymentStatus: "SUCCESS",
     })
     .sort({ createdAt: -1 })
@@ -37,7 +26,7 @@ export async function POST(req: Request) {
 
     if (!donations || donations.length === 0) {
       return NextResponse.json(
-        { error: "No completed donations were found with the provided information." },
+        { error: "No completed donations were found with the provided mobile number." },
         { status: 404 }
       );
     }
@@ -68,7 +57,7 @@ export async function POST(req: Request) {
     }
     console.error("Error searching receipts:", error);
     return NextResponse.json(
-      { error: "No completed donations were found with the provided information." },
+      { error: "No completed donations were found with the provided mobile number." },
       { status: 500 }
     );
   }

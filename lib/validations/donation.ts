@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-const optionalEmail = z
+const mandatoryEmail = z
   .string()
   .trim()
-  .optional()
-  .or(z.literal(""))
-  .refine((value) => !value || z.string().email().safeParse(value).success, "Invalid email address");
+  .min(1, "Email is required")
+  .email("A valid email address is required");
 
 const optionalMobile = z
   .string()
@@ -19,7 +18,7 @@ export const donationSchema = z.object({
   gothra: z.string().trim().min(2, "Gothra is required"),
   nakshatra: z.string().trim().optional().or(z.literal("")),
   mobile: optionalMobile,
-  email: optionalEmail,
+  email: mandatoryEmail,
   sevaId: z.string().min(1, "Select a seva"),
   amount: z.coerce.number().int().positive("Amount must be greater than zero")
 });
@@ -31,7 +30,7 @@ export const offlineBookingSchema = z.object({
   gothra: z.string().trim().optional().or(z.literal("")),
   nakshatra: z.string().trim().optional().or(z.literal("")),
   mobile: z.string().trim().refine((value) => /^[6-9]\d{9}$/.test(value), "Enter a valid 10 digit mobile number"),
-  email: optionalEmail,
+  email: mandatoryEmail,
   sevaId: z.string().min(1, "Select a seva"),
   amount: z.coerce.number().int().positive("Amount must be greater than zero"),
   paymentMethod: z.enum(["Cash", "Manual UPI", "Card", "Cheque", "Other"], {

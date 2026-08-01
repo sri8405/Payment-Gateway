@@ -91,6 +91,26 @@ type SuccessInput = {
 export async function processRazorpaySuccess(input: SuccessInput) {
   await connectToDatabase();
 
+  const existing = await Donation.findOne({ razorpayOrderId: input.razorpayOrderId }).lean() as any;
+  if (!existing) {
+    return null;
+  }
+
+  if (existing.paymentStatus === "SUCCESS") {
+    const changes: any = {};
+    if (input.signatureVerified && !existing.signatureVerified) changes.signatureVerified = true;
+    if (input.captured && !existing.razorpayCaptured) changes.razorpayCaptured = true;
+    if (input.razorpayPaymentId && existing.razorpayPaymentId !== input.razorpayPaymentId) changes.razorpayPaymentId = input.razorpayPaymentId;
+    if (input.razorpaySignature && !existing.razorpaySignature) changes.razorpaySignature = input.razorpaySignature;
+    
+    if (Object.keys(changes).length > 0) {
+      await Donation.updateOne({ razorpayOrderId: input.razorpayOrderId }, { $set: changes });
+    }
+    
+    const donationId = await ensureReceiptIfAllowed(input.razorpayOrderId);
+    return { ...existing, ...changes, donationId: donationId || existing.donationId };
+  }
+
   const update: Record<string, unknown> = {
     paymentStatus: "SUCCESS",
     razorpayPaymentId: input.razorpayPaymentId,

@@ -1,9 +1,23 @@
 import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import { AudioProvider } from "@/components/providers/AudioProvider";
 import { PwaLifecycleProvider } from "@/components/providers/PwaLifecycleProvider";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
 import { PwaInstallPrompt } from "@/components/ui/PwaInstallPrompt";
 import "./globals.css";
+
+const cormorant = Cormorant_Garamond({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cormorant",
+  display: "swap",
+});
+
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "GuruSeva - Temple Seva Booking",
@@ -31,8 +45,8 @@ export default async function RootLayout({
   const settings = await templeSettingsRepository.getCurrentOrDefault();
 
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen flex flex-col">
+    <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
         <PwaLifecycleProvider />
         <AudioProvider initialAudioUrl={settings.audioUrl || ""}>
           {children}

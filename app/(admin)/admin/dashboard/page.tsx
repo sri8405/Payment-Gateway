@@ -2,6 +2,15 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { StatCard } from "@/components/admin/StatCard";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 import { sevaRepository } from "@/lib/db/repositories/sevaRepository";
+import { 
+  Banknote, 
+  CalendarDays, 
+  Wallet, 
+  Users, 
+  TrendingUp,
+  Award,
+  BookOpenCheck
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -32,77 +41,110 @@ export default async function DashboardPage() {
     // Sevas not found or db error, count remains 0
   }
 
+  const successRate = stats.totalDonations > 0 
+    ? Math.round((stats.successfulPayments / stats.totalDonations) * 100) 
+    : 0;
+
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-serif text-2xl font-bold text-copper">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Seva booking activity and summaries</p>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        {/* Header */}
+        <div className="flex flex-col gap-2 border-b border-border/40 pb-6">
+          <h1 className="font-serif text-3xl font-bold text-foreground">Overview</h1>
+          <p className="text-sm text-muted-foreground">Monitor real-time seva bookings and transaction analytics.</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Primary Stats Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Today's Collection"
             value={`₹${stats.today.amount.toLocaleString('en-IN')}`}
             detail={`${stats.today.count} bookings today`}
-            icon="🪔"
+            icon={<Banknote className="h-6 w-6" />}
             color="saffron"
           />
           <StatCard
             title="Monthly Collection"
             value={`₹${stats.month.amount.toLocaleString('en-IN')}`}
             detail={`${stats.month.count} bookings this month`}
-            icon="📊"
+            icon={<CalendarDays className="h-6 w-6" />}
             color="gold"
           />
           <StatCard
             title="Total Revenue"
             value={`₹${stats.totalAmount.toLocaleString('en-IN')}`}
             detail={`${stats.successfulPayments} successful payments`}
-            icon="💰"
-            color="copper"
+            icon={<Wallet className="h-6 w-6" />}
+            color="success"
           />
           <StatCard
             title="Total Bookings"
-            value={stats.totalDonations}
+            value={stats.totalDonations.toLocaleString('en-IN')}
             detail={`${stats.uniqueDonors} unique devotees`}
-            icon="📋"
-            color="maroon"
+            icon={<Users className="h-6 w-6" />}
+            color="copper"
           />
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-gold/15 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground">Payment Success Rate</h3>
-            <p className="mt-2 font-serif text-3xl font-bold text-success">
-              {stats.totalDonations > 0 
-                ? Math.round((stats.successfulPayments / stats.totalDonations) * 100) 
-                : 0}%
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {stats.failedPayments} failed transactions
-            </p>
+        {/* Secondary Insights Grid */}
+        <div className="grid gap-6 sm:grid-cols-3">
+          
+          <div className="group relative overflow-hidden rounded-2xl border border-border/40 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Success Rate</h3>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <p className="font-serif text-2xl font-bold text-foreground">{successRate}%</p>
+                  <p className="text-xs font-medium text-destructive">{stats.failedPayments} failed</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div 
+                className="h-full bg-blue-500 rounded-full transition-all duration-1000" 
+                style={{ width: `${successRate}%` }}
+              />
+            </div>
           </div>
-          <div className="rounded-xl border border-gold/15 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground">Top Devotee</h3>
-            <p className="mt-2 font-serif text-2xl font-bold text-saffron truncate">
-              {stats.topDonor?.name || "N/A"}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {stats.topDonor ? `Donated ₹${stats.topDonor.amount.toLocaleString('en-IN')}` : "No donations yet"}
-            </p>
+
+          <div className="group relative overflow-hidden rounded-2xl border border-border/40 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-500">
+                <Award className="h-6 w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-medium text-muted-foreground">Top Devotee</h3>
+                <p className="mt-1 truncate font-serif text-2xl font-bold text-foreground">
+                  {stats.topDonor?.name || "N/A"}
+                </p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground/80">
+                  {stats.topDonor ? `Donated ₹${stats.topDonor.amount.toLocaleString('en-IN')}` : "No donations yet"}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="rounded-xl border border-gold/15 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-muted-foreground">Most Popular Seva</h3>
-            <p className="mt-2 font-serif text-2xl font-bold text-copper truncate">
-              {stats.topSeva || "N/A"}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Out of {sevaCount} active sevas
-            </p>
+
+          <div className="group relative overflow-hidden rounded-2xl border border-border/40 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-pink-50 text-pink-500">
+                <BookOpenCheck className="h-6 w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-medium text-muted-foreground">Popular Seva</h3>
+                <p className="mt-1 truncate font-serif text-xl font-bold text-foreground">
+                  {stats.topSeva || "N/A"}
+                </p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground/80">
+                  Out of {sevaCount} active sevas
+                </p>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </AdminShell>
