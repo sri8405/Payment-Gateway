@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { auth } from "@/lib/auth";
 import { auditLogRepository } from "@/lib/db/repositories/auditLogRepository";
@@ -108,3 +108,4 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     return apiErrorResponse(error);
   }
 }
+

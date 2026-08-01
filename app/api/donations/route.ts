@@ -1,11 +1,15 @@
-import { NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 import { sevaRepository } from "@/lib/db/repositories/sevaRepository";
 import { donationSchema } from "@/lib/validations/donation";
 import { apiErrorResponse, AppError } from "@/lib/utils/errors";
 import { generateDonationId } from "@/lib/utils/donationId";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(request, "donations:create");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const parsed = donationSchema.safeParse(body);
@@ -20,11 +24,10 @@ export async function POST(request: NextRequest) {
       throw new AppError("BAD_REQUEST", "Selected seva is not available");
     }
 
-    // Validate amount based on seva pricing mode to prevent client-side modifications
     if (seva.pricingMode === "fixed") {
       const expectedAmount = seva.fixedAmount || seva.suggestedAmount;
       if (parsed.data.amount !== expectedAmount) {
-        throw new AppError("BAD_REQUEST", `Invalid amount for fixed pricing mode. Expected ₹${expectedAmount}`);
+        throw new AppError("BAD_REQUEST", `Invalid amount for fixed pricing mode. Expected Rs ${expectedAmount}`);
       }
     } else if (seva.pricingMode === "options") {
       const allowedOptions = seva.amountOptions && seva.amountOptions.length > 0
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const donationId = await generateDonationId();
+    const donationId = generateDonationId();
     const donation = await donationRepository.create({
       donationId,
       name: parsed.data.name,
@@ -49,6 +52,10 @@ export async function POST(request: NextRequest) {
       sevaId: seva._id,
       sevaName: seva.name,
       amount: parsed.data.amount,
+      gatewayFee: 0,
+      gatewayGST: 0,
+      processingCharge: 0,
+      totalPaid: 0,
       status: "PENDING",
       paymentStatus: "PENDING",
       paymentSource: "Online",
@@ -59,7 +66,9 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ donation });
   } catch (error) {
-    console.error("Donation route error:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Donation route error", error);
+    }
     return apiErrorResponse(error);
   }
 }

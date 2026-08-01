@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { offlineBookingSchema } from "@/lib/validations/donation";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 import { sevaRepository } from "@/lib/db/repositories/sevaRepository";
-import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
 import { connectToDatabase } from "@/lib/db/connect";
 
 export async function POST(req: Request) {
@@ -27,7 +26,7 @@ export async function POST(req: Request) {
     if (seva.pricingMode === "fixed") {
       const fixedAmount = seva.fixedAmount || seva.suggestedAmount;
       if (data.amount !== fixedAmount) {
-        return NextResponse.json({ error: `Amount must be exactly ₹${fixedAmount} for this Seva` }, { status: 400 });
+        return NextResponse.json({ error: `Amount must be exactly â‚¹${fixedAmount} for this Seva` }, { status: 400 });
       }
     } else if (seva.pricingMode === "options") {
       const allowedOptions = seva.amountOptions && seva.amountOptions.length > 0
@@ -43,7 +42,6 @@ export async function POST(req: Request) {
     const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, "");
     const randomHex = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
     const merchantTransactionId = `OFFLINE-${yyyymmdd}-${randomHex.toUpperCase()}`;
-    const receiptNumber = await generateReceiptNumber();
 
     const bookingDate = data.bookingDate ? new Date(data.bookingDate) : now;
 
@@ -57,15 +55,18 @@ export async function POST(req: Request) {
       sevaId: data.sevaId,
       sevaName: seva.name,
       amount: data.amount,
+      gatewayFee: 0,
+      gatewayGST: 0,
+      processingCharge: 0,
+      totalPaid: data.amount,
       status: "VERIFIED" as const,
-      paymentStatus: "SUCCESS",
-      paymentSource: "Offline",
+      paymentStatus: "SUCCESS" as const,
+      paymentSource: "Offline" as const,
       merchantTransactionId,
       paymentMethod: data.paymentMethod,
-      receiptNumber,
       transactionTime: now,
-      donationType: "SEVA",
-      bookingStatus: "COMPLETED",
+      donationType: "SEVA" as const,
+      bookingStatus: "COMPLETED" as const,
       paymentLogs: [{ status: "SUCCESS", timestamp: now, rawResponse: { source: "Admin Offline Entry" } }],
       enteredBy: session.user.email || session.user.name || "Admin",
       createdAt: bookingDate,
@@ -82,3 +83,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message || "Failed to create offline booking" }, { status: 500 });
   }
 }
+
+

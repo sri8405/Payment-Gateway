@@ -12,6 +12,7 @@ export interface PaymentParams {
   upiDisplayName: string;
   /** Human-readable account holder / receiver name (temple/organization name) */
   receiverName: string;
+  isAndroid?: boolean;
 }
 
 export interface PaymentResult {

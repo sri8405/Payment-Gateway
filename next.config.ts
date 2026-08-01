@@ -3,12 +3,49 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
+  reloadOnOnline: true,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
+  extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
+    cleanupOutdatedCaches: true,
+    skipWaiting: true,
+    clientsClaim: true,
+    importScripts: ["/sw-helpers.js"],
+    navigateFallbackDenylist: [
+      /^\/api\//,
+      /^https:\/\/(?:[^/]+\.)?razorpay\.com/,
+      /^https:\/\/(?:[^/]+\.)?phonepe\.com/,
+      /^\/admin/,
+    ],
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/(?:[^/]+\.)?razorpay\.com\/.*/i,
+        handler: "NetworkOnly",
+      },
+      {
+        urlPattern: /^https:\/\/(?:[^/]+\.)?phonepe\.com\/.*/i,
+        handler: "NetworkOnly",
+      },
+      {
+        urlPattern: /^\/api\/auth\/.*/i,
+        handler: "NetworkOnly",
+      },
+      {
+        urlPattern: /^\/api\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "apis",
+          networkTimeoutSeconds: 5,
+          expiration: {
+            maxEntries: 32,
+            maxAgeSeconds: 86400,
+          },
+        },
+      },
+    ],
   },
   fallbacks: {
     document: "/~offline",
@@ -55,7 +92,20 @@ const nextConfig: NextConfig = {
         },
         {
           key: "Content-Security-Policy",
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.phonepe.com https://api-preprod.phonepe.com; frame-src 'self';",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://*.razorpay.com",
+            "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://*.razorpay.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.razorpay.com",
+            "font-src 'self' https://fonts.gstatic.com https://checkout.razorpay.com",
+            "img-src 'self' data: blob: https: https://*.razorpay.com",
+            "connect-src 'self' https://api.phonepe.com https://api-preprod.phonepe.com https://api.razorpay.com https://checkout.razorpay.com https://lumberjack.razorpay.com https://lumberjack-cx.razorpay.com https://custom-auth.razorpay.com https://*.razorpay.com wss://*.razorpay.com",
+            "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://custom-auth.razorpay.com https://*.razorpay.com",
+            "child-src 'self' blob: https://*.razorpay.com",
+            "worker-src 'self' blob: https://*.razorpay.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+          ].join("; "),
         },
       ],
     },
@@ -74,6 +124,19 @@ const nextConfig: NextConfig = {
         {
           key: "Cache-Control",
           value: "public, max-age=31536000, immutable",
+        },
+      ],
+    },
+    {
+      source: "/uploads/:path*",
+      headers: [
+        {
+          key: "X-Content-Type-Options",
+          value: "nosniff",
+        },
+        {
+          key: "Content-Security-Policy",
+          value: "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         },
       ],
     },

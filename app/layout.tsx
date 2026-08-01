@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AudioProvider } from "@/components/providers/AudioProvider";
+import { PwaLifecycleProvider } from "@/components/providers/PwaLifecycleProvider";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
 import { PwaInstallPrompt } from "@/components/ui/PwaInstallPrompt";
 import "./globals.css";
@@ -32,6 +33,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen flex flex-col">
+        <PwaLifecycleProvider />
         <AudioProvider initialAudioUrl={settings.audioUrl || ""}>
           {children}
         </AudioProvider>

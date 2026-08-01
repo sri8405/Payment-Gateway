@@ -162,3 +162,9 @@ Before production deployment, configure MongoDB Atlas network access, environmen
 - Add payment verification integrations
 - Add role-based admin permissions
 - Add backup and restore operational playbooks
+
+### Razorpay webhook secret
+Register the production webhook in Razorpay Dashboard > Settings > Webhooks with the endpoint https://your-domain.com/api/payments/callback. Copy the generated webhook secret into RAZORPAY_WEBHOOK_SECRET. Do not reuse RAZORPAY_KEY_SECRET for webhook validation.
+
+### API rate limiting
+Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN, or the equivalent Vercel KV REST variables, before production traffic reaches donation or payment API routes.

@@ -100,6 +100,13 @@ function AppIcon({ app }: { app: UpiApp }) {
   return <Smartphone className="h-5 w-5" />;
 }
 
+function toAndroidIntentUrl(url: string) {
+  if (!url.startsWith("upi://pay?")) {
+    return url;
+  }
+
+  return url.replace("upi://pay?", "intent://pay?") + "#Intent;scheme=upi;end";
+}
 export function PaymentSection({
   paymentUrl,
   upiId,
@@ -114,13 +121,17 @@ export function PaymentSection({
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [launchingApp, setLaunchingApp] = useState<string | null>(null);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const appPaymentUrl = isAndroid ? toAndroidIntentUrl(paymentUrl) : paymentUrl;
 
   useEffect(() => {
+    const isAndroidDevice = /Android/i.test(navigator.userAgent);
     const isMobile =
-      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      isAndroidDevice || /iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
       window.matchMedia("(pointer: coarse)").matches ||
       window.matchMedia("(max-width: 768px)").matches;
 
+    setIsAndroid(isAndroidDevice);
     setDeviceType(isMobile ? "mobile" : "desktop");
   }, []);
 
@@ -186,7 +197,7 @@ export function PaymentSection({
     setLaunchingApp(app.name);
 
     // Use trusted anchor element click instead of window.location.href
-    openUpiLink(paymentUrl);
+    openUpiLink(appPaymentUrl);
 
     // Clear loading state after reasonable timeout
     window.setTimeout(() => setLaunchingApp(null), 3000);
@@ -288,7 +299,7 @@ export function PaymentSection({
             id="upi-pay-generic"
             onClick={() => {
               setLaunchingApp("UPI");
-              openUpiLink(paymentUrl);
+              openUpiLink(appPaymentUrl);
               window.setTimeout(() => setLaunchingApp(null), 3000);
             }}
             disabled={launchingApp !== null}
@@ -355,3 +366,4 @@ export function PaymentSection({
     </div>
   );
 }
+

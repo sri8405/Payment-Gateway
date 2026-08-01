@@ -1,6 +1,6 @@
 import { FilterQuery, Types } from "mongoose";
 import { connectToDatabase } from "@/lib/db/connect";
-import { Donation } from "@/lib/db/models/Donation";
+import { Donation, type PaymentStatus } from "@/lib/db/models/Donation";
 import { AppError } from "@/lib/utils/errors";
 
 export type DonationStatus = "PENDING" | "VERIFIED";
@@ -15,12 +15,32 @@ export type DonationPlain = {
   sevaId: string;
   sevaName: string;
   amount: number;
+  gatewayFee: number;
+  gatewayGST: number;
+  processingCharge: number;
+  totalPaid: number;
   status: DonationStatus;
-  paymentStatus: string;
+  paymentStatus: PaymentStatus;
   merchantTransactionId?: string;
   phonePeTransactionId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  razorpayOrderId?: string;
+  razorpayCaptured?: boolean;
+  signatureVerified?: boolean;
+  paymentGateway?: string;
   paymentMethod?: string;
   receiptNumber?: string;
+  cancellationReason?: string;
+  cancelledAt?: Date;
+  refundStatus?: string;
+  refundedAmount?: number;
+  refundId?: string;
+  refundReason?: string;
+  refunds?: any[];
+  lastReconciledAt?: Date;
+  reconciliationStatus?: string;
+  reconciliationLogs?: any[];
   transactionTime?: Date;
   donationType: string;
   bookingStatus: string;
@@ -32,7 +52,7 @@ export type DonationPlain = {
 };
 
 export type DonationUpdateInput = Partial<
-  Pick<DonationPlain, "name" | "gothra" | "mobile" | "email" | "sevaId" | "sevaName" | "amount" | "status" | "receiptNumber">
+  Pick<DonationPlain, "name" | "gothra" | "mobile" | "email" | "sevaId" | "sevaName" | "amount" | "gatewayFee" | "gatewayGST" | "processingCharge" | "totalPaid" | "status" | "paymentStatus" | "receiptNumber" | "razorpayPaymentId" | "razorpaySignature" | "razorpayOrderId" | "razorpayCaptured" | "signatureVerified" | "paymentGateway" | "transactionTime" | "bookingStatus" | "cancellationReason" | "cancelledAt" | "refundStatus" | "refundedAmount" | "refundId" | "refundReason" | "lastReconciledAt" | "reconciliationStatus">
 >;
 
 export type DonationFilters = {
@@ -58,12 +78,32 @@ function plainDonation(doc: any): DonationPlain {
     sevaId: doc.sevaId.toString(),
     sevaName: doc.sevaName,
     amount: doc.amount,
+    gatewayFee: doc.gatewayFee || 0,
+    gatewayGST: doc.gatewayGST || 0,
+    processingCharge: doc.processingCharge || 0,
+    totalPaid: doc.totalPaid || 0,
     status: doc.status,
     paymentStatus: doc.paymentStatus || "PENDING",
     merchantTransactionId: doc.merchantTransactionId,
     phonePeTransactionId: doc.phonePeTransactionId,
+    razorpayPaymentId: doc.razorpayPaymentId,
+    razorpaySignature: doc.razorpaySignature,
+    razorpayOrderId: doc.razorpayOrderId,
+    razorpayCaptured: doc.razorpayCaptured || false,
+    signatureVerified: doc.signatureVerified || false,
+    paymentGateway: doc.paymentGateway,
     paymentMethod: doc.paymentMethod,
     receiptNumber: doc.receiptNumber,
+    cancellationReason: doc.cancellationReason,
+    cancelledAt: doc.cancelledAt,
+    refundStatus: doc.refundStatus || "NONE",
+    refundedAmount: doc.refundedAmount || 0,
+    refundId: doc.refundId,
+    refundReason: doc.refundReason,
+    refunds: doc.refunds || [],
+    lastReconciledAt: doc.lastReconciledAt,
+    reconciliationStatus: doc.reconciliationStatus,
+    reconciliationLogs: doc.reconciliationLogs || [],
     transactionTime: doc.transactionTime,
     donationType: doc.donationType || "SEVA",
     bookingStatus: doc.bookingStatus || "BOOKED",
@@ -329,6 +369,46 @@ export const donationRepository = {
     }
   },
 
+  async findByRazorpayOrderId(razorpayOrderId: string) {
+    try {
+      await connectToDatabase();
+      const donation = await Donation.findOne({ razorpayOrderId }).lean();
+      return donation ? plainDonation(donation) : null;
+    } catch {
+      throw new AppError("DATABASE_ERROR", "Failed to find donation by Razorpay order ID");
+    }
+  },
+
+  async updateRazorpayPaymentStatus(razorpayOrderId: string, data: { paymentStatus: string, razorpayPaymentId?: string, transactionTime?: Date, paymentLog?: any }) {
+    try {
+      await connectToDatabase();
+      const updateDoc: any = { paymentStatus: data.paymentStatus, paymentGateway: "Razorpay" };
+      if (data.razorpayPaymentId) {
+        updateDoc.razorpayPaymentId = data.razorpayPaymentId;
+      }
+      if (data.transactionTime) updateDoc.transactionTime = data.transactionTime;
+      
+      const updateOp: any = { $set: updateDoc };
+      if (data.paymentLog) {
+        updateOp.$push = { paymentLogs: data.paymentLog };
+      }
+
+      const donation = await Donation.findOneAndUpdate(
+        { razorpayOrderId },
+        updateOp,
+        { new: true }
+      ).lean();
+
+      if (!donation) {
+        throw new AppError("NOT_FOUND", "Donation not found by Razorpay order ID");
+      }
+      return plainDonation(donation);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("DATABASE_ERROR", "Failed to update Razorpay payment status");
+    }
+  },
+
   async findTopDonors(minAmount: number = 500, limit: number = 50) {
     try {
       await connectToDatabase();
@@ -412,3 +492,4 @@ export const donationRepository = {
     }
   }
 };
+

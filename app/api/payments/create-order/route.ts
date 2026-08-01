@@ -1,20 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { Types } from "mongoose";
 import { RazorpayService } from "@/lib/payment/RazorpayService";
+import { calculatePaymentFees } from "@/lib/payment/paymentFees";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { getIdempotencyKey, checkIdempotency, storeIdempotency } from "@/lib/utils/idempotency";
 
-export async function POST(req: Request) {
+const donationIdPattern = /^DON-\d{8}-\d{10}$/;
+
+function isValidDonationIdentifier(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length <= 64 &&
+    (donationIdPattern.test(value) || Types.ObjectId.isValid(value))
+  );
+}
+
+export async function POST(req: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(req, "payments:create-order");
+  if (rateLimitResponse) return rateLimitResponse;
+
+  const idempotencyKey = getIdempotencyKey(req);
+  if (idempotencyKey) {
+    const cached = checkIdempotency(idempotencyKey);
+    if (cached.hit) {
+      return NextResponse.json(cached.response);
+    }
+  }
+
   try {
     const { donationId } = await req.json();
 
-    if (!donationId) {
+    if (!isValidDonationIdentifier(donationId)) {
       return NextResponse.json(
-        { success: false, error: "Donation ID is required" },
+        { success: false, error: "A valid donation ID is required" },
         { status: 400 }
       );
     }
 
-    console.log("Incoming donation ID:", donationId);
-    console.log("MongoDB query for donationId:", donationId);
     const donation = await donationRepository.findById(donationId);
     if (!donation) {
       return NextResponse.json(
@@ -23,50 +46,73 @@ export async function POST(req: Request) {
       );
     }
 
-    // Amount in paise (Razorpay expects smallest currency unit)
-    const amountInPaise = donation.amount * 100;
-
-    if (amountInPaise < 100) {
+    if (donation.status === "VERIFIED" || donation.paymentStatus === "SUCCESS") {
       return NextResponse.json(
-        { success: false, error: "Minimum payment amount is ₹1 (100 paise)" },
+        { success: false, error: "Payment has already been completed for this donation" },
+        { status: 409 }
+      );
+    }
+
+    if (!["PENDING", "INITIATED"].includes(donation.paymentStatus)) {
+      return NextResponse.json(
+        { success: false, error: "Donation is not eligible for payment order creation" },
+        { status: 409 }
+      );
+    }
+
+    // Calculate payment processing fees (server-side only)
+    const fees = calculatePaymentFees(donation.amount);
+
+    if (fees.totalPayablePaise < 100) {
+      return NextResponse.json(
+        { success: false, error: "Minimum payment amount is Rs 1 (100 paise)" },
         { status: 400 }
       );
     }
 
-    // ── Pre-call diagnostic log ──────────────────────────────────────────
-    console.log("=== RAZORPAY CREATE ORDER REQUEST ===");
-    console.log("Donation ID          :", donation.donationId);
-    console.log("Amount (₹)           :", donation.amount);
-    console.log("Amount (paise)       :", amountInPaise);
-    console.log("Receipt              :", donation.donationId);
-    console.log("Currency             :", "INR");
-    console.log("RAZORPAY_KEY_ID      :", process.env.RAZORPAY_KEY_ID);
-    console.log("KEY_SECRET present   :", Boolean(process.env.RAZORPAY_KEY_SECRET));
-    console.log("=====================================");
-
+    // Create Razorpay order with TOTAL PAYABLE (seva + processing charges)
     const order = await RazorpayService.createOrder(
-      amountInPaise,
+      fees.totalPayablePaise,
       "INR",
       donation.donationId
     );
-    console.log("Razorpay order creation result:", order);
 
-    // Store Razorpay order ID and set payment status in a single atomic update
     const { Donation } = await import("@/lib/db/models/Donation");
     const { connectToDatabase } = await import("@/lib/db/connect");
     await connectToDatabase();
-    await Donation.findOneAndUpdate(
-      { donationId: donation.donationId },
+
+    const updatedDonation = await Donation.findOneAndUpdate(
+      {
+        donationId: donation.donationId,
+        status: "PENDING",
+        paymentStatus: { $in: ["PENDING", "INITIATED"] },
+      },
       {
         $set: {
           razorpayOrderId: order.orderId,
           paymentStatus: "INITIATED",
           paymentGateway: "Razorpay",
+          gatewayFee: fees.gatewayFee,
+          gatewayGST: fees.gatewayGST,
+          processingCharge: fees.processingCharge,
+          totalPaid: fees.totalPayable,
         },
-      }
-    );
+      },
+      { new: true }
+    ).lean();
 
-    return NextResponse.json({
+    if (!updatedDonation) {
+      return NextResponse.json(
+        { success: false, error: "Donation is no longer eligible for payment order creation" },
+        { status: 409 }
+      );
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.info("Razorpay order created", { donationId: donation.donationId });
+    }
+
+    const successPayload = {
       success: true,
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       orderId: order.orderId,
@@ -81,20 +127,29 @@ export async function POST(req: Request) {
       notes: {
         sevaName: donation.sevaName,
       },
-    });
-  } catch (error: any) {
-    // ── Full diagnostics ──────────────────────────────────────────────────
-    console.error("=== CREATE ORDER ROUTE ERROR ===");
-    console.error("Type              :", error?.constructor?.name);
-    console.error("Message           :", error?.message);
-    console.error("RAZORPAY_KEY_ID   :", process.env.RAZORPAY_KEY_ID);
-    console.error("KEY_SECRET set    :", Boolean(process.env.RAZORPAY_KEY_SECRET));
-    console.error("Stack             :", error instanceof Error ? error.stack : "(no stack)");
-    console.error("JSON              :", JSON.stringify(error, null, 2));
-    console.error("================================");
+      // Fee breakdown for frontend display
+      fees: {
+        sevaAmount: fees.sevaAmount,
+        gatewayFee: fees.gatewayFee,
+        gatewayGST: fees.gatewayGST,
+        processingCharge: fees.processingCharge,
+        totalPayable: fees.totalPayable,
+      },
+    };
 
-    // Razorpay authentication failure — 401 is the correct response here because
-    // the *gateway* rejected us with auth failure, not the caller.
+    if (idempotencyKey) {
+      storeIdempotency(idempotencyKey, successPayload);
+    }
+
+    return NextResponse.json(successPayload);
+  } catch (error: any) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Create order route error", {
+        type: error?.constructor?.name,
+        message: error?.message,
+      });
+    }
+
     if (
       error?.message?.toLowerCase().includes("authentication") ||
       error?.message?.toLowerCase().includes("credentials")
@@ -102,14 +157,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "Payment gateway authentication failed. The Razorpay API key pair is invalid or has been regenerated. Update RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment.",
-          detail: error.message,
+          error: "Payment gateway authentication failed. Update RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment.",
         },
         { status: 401 }
       );
     }
 
-    // Donation not found (thrown by repository as AppError)
     if (error?.message?.toLowerCase().includes("not found")) {
       return NextResponse.json(
         { success: false, error: error.message },
@@ -117,7 +170,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // All other errors — do NOT swallow; surface the real message
     return NextResponse.json(
       { success: false, error: error.message || "Internal server error" },
       { status: 500 }

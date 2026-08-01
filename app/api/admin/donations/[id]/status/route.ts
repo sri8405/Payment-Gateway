@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { auditLogRepository } from "@/lib/db/repositories/auditLogRepository";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
@@ -17,14 +17,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       throw new AppError("UNAUTHORIZED", "Unauthorized");
     }
 
+    const { id } = await params;
     const { status } = await request.json();
 
     if (status !== "PENDING" && status !== "VERIFIED") {
       throw new AppError("BAD_REQUEST", "Invalid status");
     }
 
-    const { id } = await params;
     const before = await donationRepository.findById(id);
+    if (!before) {
+      throw new AppError("NOT_FOUND", "Donation not found");
+    }
+
+    if (status === "VERIFIED" && (before.paymentStatus !== "SUCCESS" || !before.receiptNumber)) {
+      throw new AppError("CONFLICT", "Only successful receipted payments can be marked verified");
+    }
+
     const donation = await donationRepository.updateStatus(id, status);
 
     await auditLogRepository.create({

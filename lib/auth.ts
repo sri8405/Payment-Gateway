@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { adminRepository } from "@/lib/db/repositories/adminRepository";
 import { loginSchema } from "@/lib/validations/auth";
 import { authConfig } from "./auth.config";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -13,11 +14,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         username: {},
         password: {},
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) {
           return null;
+        }
+
+        const rateLimitResponse = await enforceRateLimit(request as any, "admin:login");
+        if (rateLimitResponse) {
+          throw new Error("Too many login attempts. Please try again later.");
         }
 
         const admin = await adminRepository.findByUsername(

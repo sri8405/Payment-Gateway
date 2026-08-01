@@ -45,6 +45,13 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "no-undef": "off"
     }
+  },
+  {
+    files: ["**/*.js"],
+    rules: {
+      "no-undef": "off",
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+    }
   }
 ];
 

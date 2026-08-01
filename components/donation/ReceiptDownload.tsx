@@ -3,11 +3,28 @@
 import { Download } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Button } from "@/components/ui/button";
-import type { DonationPlain } from "@/lib/db/repositories/donationRepository";
 import type { TempleSettingsPlain } from "@/lib/db/repositories/templeSettingsRepository";
 
+export type SanitizedDonation = {
+  donationId: string;
+  createdAt: string | Date;
+  name: string;
+  gothra?: string;
+  nakshatra?: string;
+  mobile?: string;
+  email?: string;
+  sevaName: string;
+  amount: number;
+  paymentMethod?: string;
+  paymentSource?: string;
+  status: string;
+  receiptNumber?: string;
+  processingCharge?: number;
+  totalPaid?: number;
+};
+
 type Props = {
-  donation: DonationPlain;
+  donation: SanitizedDonation;
   settings: TempleSettingsPlain;
 };
 
@@ -43,7 +60,9 @@ export function ReceiptDownload({ donation, settings }: Props) {
       ["Mobile", donation.mobile || "-"],
       ["Email", donation.email || "-"],
       ["Seva", donation.sevaName],
-      ["Amount", `Rs ${donation.amount}`],
+      ["Seva Amount", `Rs ${donation.amount.toFixed(2)}`],
+      ...(donation.processingCharge ? [["Processing Charges (incl. GST)", `Rs ${donation.processingCharge.toFixed(2)}`]] : []),
+      ["Total Paid", `Rs ${(donation.totalPaid || donation.amount).toFixed(2)}`],
       ["Payment Method", donation.paymentMethod || "Online"],
       ["Payment Source", donation.paymentSource || "Online"],
       ["Status", donation.status]
@@ -65,6 +84,15 @@ export function ReceiptDownload({ donation, settings }: Props) {
     doc.text(settings.receiptFooter || "May Guruji's blessings always be with you.", pageWidth / 2, y + 18, {
       align: "center"
     });
+    if (donation.processingCharge && donation.processingCharge > 0) {
+      doc.setFontSize(8);
+      doc.text(
+        "Payment Processing Charges (incl. GST) are charged by Razorpay. The temple receives the full Seva amount.",
+        pageWidth / 2,
+        y + 28,
+        { align: "center", maxWidth: pageWidth - 48 }
+      );
+    }
     doc.save(`${donation.donationId}-receipt.pdf`);
   }
 

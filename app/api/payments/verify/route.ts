@@ -1,47 +1,94 @@
-import { NextResponse } from "next/server";
-import { PhonePeService } from "@/lib/payment/PhonePeService";
+import { NextResponse, type NextRequest } from "next/server";
+import { RazorpayService } from "@/lib/payment/RazorpayService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
-import { generateReceiptNumber } from "@/lib/utils/receiptNumber";
+import { processRazorpaySuccess } from "@/lib/payment/paymentLifecycle";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { generateSecureToken } from "@/lib/utils/secureToken";
 
+export async function POST(req: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(req, "payments:verify");
+  if (rateLimitResponse) return rateLimitResponse;
 
-export async function POST(req: Request) {
   try {
-    const { merchantTransactionId } = await req.json();
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = await req.json();
 
-    if (!merchantTransactionId) {
-      return NextResponse.json({ success: false, error: "Transaction ID is required" }, { status: 400 });
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing required fields: razorpay_order_id, razorpay_payment_id, razorpay_signature",
+        },
+        { status: 400 }
+      );
     }
 
-    const result = await PhonePeService.verifyPayment(merchantTransactionId);
-    
-    let updatedDonation;
-    if (result.success && result.paymentStatus === 'SUCCESS') {
-       const existingDonation = await donationRepository.findByMerchantTransactionId(merchantTransactionId);
-       const receiptNumber = existingDonation?.receiptNumber || await generateReceiptNumber();
-
-       updatedDonation = await donationRepository.updatePaymentStatus(merchantTransactionId, {
-         paymentStatus: 'SUCCESS',
-         phonePeTransactionId: result.transactionId,
-         transactionTime: new Date(),
-       });
-       
-       const { newValues } = await donationRepository.updateById(updatedDonation.donationId, {
-         status: 'VERIFIED',
-         receiptNumber
-       });
-       updatedDonation = newValues;
-       // A separate query might be needed to set the receipt number directly if updateById doesn't support it, 
-       // but for now updatePaymentStatus handles the payment flow.
-    } else {
-       updatedDonation = await donationRepository.updatePaymentStatus(merchantTransactionId, {
-         paymentStatus: result.paymentStatus || 'FAILED',
-         phonePeTransactionId: result.transactionId
-       });
+    let isValid = false;
+    try {
+      isValid = RazorpayService.verifySignature(
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+      );
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Signature verification failed" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ success: true, paymentStatus: result.paymentStatus, donation: updatedDonation });
+    if (!isValid) {
+      return NextResponse.json(
+        { success: false, error: "Payment signature verification failed. Payment NOT marked as completed." },
+        { status: 400 }
+      );
+    }
+
+    const donation = await donationRepository.findByRazorpayOrderId(razorpay_order_id);
+    if (!donation) {
+      return NextResponse.json(
+        { success: false, error: "Donation not found for this order" },
+        { status: 404 }
+      );
+    }
+
+    let captured = false;
+    try {
+      const payment = await RazorpayService.fetchPayment(razorpay_payment_id) as any;
+      captured = payment?.status === "captured";
+    } catch {
+      captured = false;
+    }
+
+    const updated = await processRazorpaySuccess({
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
+      signatureVerified: true,
+      captured,
+      source: "verify",
+    });
+
+    const finalDonationId = updated?.donationId || donation.donationId;
+    const secureToken = generateSecureToken(finalDonationId);
+
+    return NextResponse.json({
+      success: true,
+      paymentStatus: "SUCCESS",
+      donationId: finalDonationId,
+      secureToken,
+    });
   } catch (error: any) {
-    console.error("Verify Payment Error:", error);
-    return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Verify payment route error", { message: error?.message });
+    }
+    return NextResponse.json(
+      { success: false, error: error.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }
+
