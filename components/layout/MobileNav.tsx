@@ -30,7 +30,7 @@ export function MobileNav() {
     <div className="sm:hidden flex items-center">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground hover:bg-black/5 rounded-full transition-colors active:scale-95"
+        className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-foreground hover:bg-black/5 rounded-full transition-colors active:scale-95 relative z-50"
         aria-label={isOpen ? "Close menu" : "Open menu"}
         aria-expanded={isOpen}
       >
@@ -38,26 +38,34 @@ export function MobileNav() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 top-16 z-50 flex justify-end">
-          {/* Backdrop */}
+        <>
+          {/* Backdrop - Absolute positioned relative to header to bypass backdrop-filter context bug */}
           <div 
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+            className="absolute top-full left-0 w-[100vw] h-[100vh] bg-background/80 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Drawer */}
-          <div className="relative w-64 h-full bg-card shadow-2xl border-l border-border p-6 flex flex-col gap-6 animate-fade-in-up">
-            <nav className="flex flex-col gap-4 mt-4">
+          {/* Dropdown Menu */}
+          <div className="absolute top-full left-0 w-full bg-card shadow-2xl border-b border-border z-50 flex flex-col overflow-hidden animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+            <nav className="flex flex-col p-4 gap-3">
+              <Link 
+                href="/donate"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-saffron to-gold hover:from-gold hover:to-saffron text-white font-semibold text-lg py-3 px-4 rounded-xl shadow-md transition-all active:scale-95"
+                onClick={() => setIsOpen(false)}
+              >
+                Book Seva
+              </Link>
               <Link 
                 href="/find-my-receipts"
-                className="flex items-center gap-3 text-foreground hover:text-saffron font-medium text-lg min-h-[44px] transition-colors p-2 rounded-lg hover:bg-saffron/5"
+                className="flex items-center gap-3 text-foreground hover:text-saffron font-medium text-lg min-h-[44px] transition-colors p-3 rounded-xl hover:bg-saffron/5 border border-transparent hover:border-saffron/20"
+                onClick={() => setIsOpen(false)}
               >
                 <Receipt size={24} className="text-saffron" />
                 Find My Receipts
               </Link>
             </nav>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

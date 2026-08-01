@@ -45,7 +45,7 @@ export function PublicHeader({ settings }: Props) {
             </Link>
             <Link 
               href="/donate" 
-              className="bg-gradient-to-r from-saffron to-gold hover:from-gold hover:to-saffron text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold shadow-md hover:shadow-lg transition-all active:scale-95 text-[13px] sm:text-base animate-pulse-glow whitespace-nowrap min-h-[44px] flex items-center justify-center"
+              className="hidden sm:flex bg-gradient-to-r from-saffron to-gold hover:from-gold hover:to-saffron text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-semibold shadow-md hover:shadow-lg transition-all active:scale-95 text-[13px] sm:text-base animate-pulse-glow whitespace-nowrap min-h-[44px] items-center justify-center"
             >
               Book Seva
             </Link>
