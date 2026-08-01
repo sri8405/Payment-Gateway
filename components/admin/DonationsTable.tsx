@@ -14,17 +14,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { serializeCsv } from "@/lib/utils/csv";
 import type { DonationPlain } from "@/lib/db/repositories/donationRepository";
 import type { SevaPlain } from "@/lib/db/repositories/sevaRepository";
+import type { TempleSettingsPlain } from "@/lib/db/repositories/templeSettingsRepository";
+import { ReceiptDownload } from "@/components/donation/ReceiptDownload";
 
 type Props = {
   initialRows: DonationPlain[];
   initialTotal: number;
   sevas: SevaPlain[];
+  settings: TempleSettingsPlain;
 };
 
 const pageSize = 20;
 const cancellableStatuses = new Set(["PENDING", "INITIATED", "FAILED"]);
 
-export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
+export function DonationsTable({ initialRows, initialTotal, sevas, settings }: Props) {
   const [filters, setFilters] = useState<DonationFilterState>({ search: "", from: "", to: "", sevaId: "", status: "", paymentSource: "", paymentMethod: "" });
   const [rows, setRows] = useState(initialRows);
   const [total, setTotal] = useState(initialTotal);
@@ -218,6 +221,9 @@ export function DonationsTable({ initialRows, initialTotal, sevas }: Props) {
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => { setEditingDonation(donation); setEditOpen(true); }}><Pencil className="h-4 w-4" />Edit</Button>
                     <Button asChild variant="ghost" size="icon" aria-label="View seva booking"><Link href={`/admin/donations/${donation.donationId}`}><Eye className="h-4 w-4" /></Link></Button>
+                    {donation.paymentStatus === "SUCCESS" && (
+                      <ReceiptDownload donation={donation} settings={settings} />
+                    )}
                     {donation.paymentStatus === "SUCCESS" && (
                       <Button variant="outline" size="sm" onClick={() => setRefundTarget(donation)}><RotateCcw className="h-4 w-4" />Refund</Button>
                     )}

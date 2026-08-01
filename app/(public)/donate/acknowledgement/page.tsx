@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ReceiptDownload } from "@/components/donation/ReceiptDownload";
+import { SuccessActions } from "@/components/donation/SuccessActions";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 import { templeSettingsRepository } from "@/lib/db/repositories/templeSettingsRepository";
 import { verifySecureToken } from "@/lib/utils/secureToken";
@@ -184,12 +184,7 @@ export default async function AcknowledgementPage({ searchParams }: Props) {
         </CardContent>
         <CardFooter className="bg-muted/30 border-t flex flex-col gap-4 p-6">
           {isSuccess ? (
-            <>
-              <ReceiptDownload donation={safeDonation} settings={settings} />
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                An SMS and Email with the receipt have been sent to your registered contact details.
-              </p>
-            </>
+            <SuccessActions donation={safeDonation} settings={settings} />
           ) : isPending ? (
             <div className="flex items-center justify-center gap-2 text-sm text-saffron">
               <AlertCircle size={16} />

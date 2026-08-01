@@ -2,7 +2,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { NextResponse, type NextRequest } from "next/server";
 
-type RateLimitName = "donations:create" | "payments:create-order" | "payments:verify" | "admin:login" | "payments:webhook";
+type RateLimitName = "donations:create" | "payments:create-order" | "payments:verify" | "admin:login" | "payments:webhook" | "donations:search-receipts";
 
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
@@ -49,6 +49,13 @@ const limiters: Record<RateLimitName, Ratelimit | null> = {
         redis,
         limiter: Ratelimit.slidingWindow(100, "1 m"),
         prefix: "ratelimit:payments:webhook",
+      })
+    : null,
+  "donations:search-receipts": redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(10, "1 m"),
+        prefix: "ratelimit:donations:search-receipts",
       })
     : null,
 };
