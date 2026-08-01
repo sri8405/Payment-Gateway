@@ -1,4 +1,5 @@
-﻿import { NextResponse } from "next/server";
+export const runtime = "nodejs";
+import { NextResponse } from "next/server";
 import { donationRepository, type DonationPlain } from "@/lib/db/repositories/donationRepository";
 
 function publicDonation(donation: DonationPlain) {

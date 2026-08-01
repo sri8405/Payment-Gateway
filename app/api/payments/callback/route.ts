@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { RazorpayService } from "@/lib/payment/RazorpayService";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";

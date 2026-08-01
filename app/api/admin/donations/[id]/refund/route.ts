@@ -1,4 +1,5 @@
-﻿import { NextRequest } from "next/server";
+export const runtime = "nodejs";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { auditLogRepository } from "@/lib/db/repositories/auditLogRepository";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
