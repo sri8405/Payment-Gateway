@@ -9,7 +9,7 @@ export type DonationPlain = {
   _id: string;
   donationId: string;
   name: string;
-  gothra: string;
+  gothra?: string;
   mobile?: string;
   email?: string;
   sevaId: string;
