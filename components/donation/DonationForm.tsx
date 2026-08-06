@@ -83,7 +83,7 @@ export function DonationForm({ sevas }: Props) {
           <Field label="Full Name" error={errors.name?.message} required>
             <Input {...register("name")} autoComplete="name" className="bg-white" placeholder="e.g. Rahul Sharma" />
           </Field>
-          <Field label="Gothra" error={errors.gothra?.message} required>
+          <Field label="Gothra" error={errors.gothra?.message}>
             <Input {...register("gothra")} className="bg-white" placeholder="e.g. Kashyapa" />
           </Field>
           <Field label="Mobile Number" error={errors.mobile?.message} required>
@@ -92,7 +92,7 @@ export function DonationForm({ sevas }: Props) {
               <Input {...register("mobile")} inputMode="numeric" autoComplete="tel" className="bg-white pl-10" placeholder="10-digit mobile" />
             </div>
           </Field>
-          <Field label="Email Address" error={errors.email?.message} required>
+          <Field label="Email Address" error={errors.email?.message}>
             <Input {...register("email")} type="email" autoComplete="email" className="bg-white" placeholder="For receiving receipts" />
           </Field>
         </div>

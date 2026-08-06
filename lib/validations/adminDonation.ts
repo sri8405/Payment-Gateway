@@ -16,7 +16,7 @@ const optionalMobile = z
 
 export const adminDonationUpdateSchema = z.object({
   name: z.string().trim().min(2, "Full name is required"),
-  gothra: z.string().trim().min(2, "Gothra is required"),
+  gothra: z.string().trim().optional().or(z.literal("")),
   mobile: optionalMobile,
   email: optionalEmail,
   sevaId: z.string().min(1, "Select a seva"),

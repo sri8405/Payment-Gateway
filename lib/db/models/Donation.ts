@@ -49,7 +49,7 @@ const donationSchema = new Schema(
   {
     donationId: { type: String, required: true, unique: true },
     name: { type: String, required: true, trim: true },
-    gothra: { type: String, required: true, trim: true },
+    gothra: { type: String, trim: true },
     mobile: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
     sevaId: { type: Schema.Types.ObjectId, ref: "Seva", required: true },
