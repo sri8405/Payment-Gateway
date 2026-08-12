@@ -145,13 +145,11 @@ export default function PayPage({ searchParams }: Props) {
           if (verifyRes.ok && verifyData.success) {
             console.log("[PayPage] Payment verified successfully! Redirecting...");
             setState("success");
-            setTimeout(() => {
-              if (verifyData.secureToken) {
-                router.push(`/donate/acknowledgement?token=${encodeURIComponent(verifyData.secureToken)}`);
-              } else {
-                router.push(`/donate/acknowledgement?id=${encodeURIComponent(verifyData.donationId || id)}`);
-              }
-            }, 2000);
+            if (verifyData.secureToken) {
+              router.push(`/donate/acknowledgement?token=${encodeURIComponent(verifyData.secureToken)}`);
+            } else {
+              router.push(`/donate/acknowledgement?id=${encodeURIComponent(verifyData.donationId || id)}`);
+            }
           } else {
             const vErr = verifyData.error || "Payment verification failed";
             console.error("[PayPage] Payment verification error:", vErr);

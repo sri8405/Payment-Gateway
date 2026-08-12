@@ -5,10 +5,10 @@ import { canGenerateReceipt } from "@/lib/utils/receiptSafety";
 import { sendDonationReceipt } from "@/lib/sendDonationReceipt";
 
 
-export async function ensureReceiptIfAllowed(razorpayOrderId: string) {
+export async function ensureReceiptIfAllowed(razorpayOrderId: string, existingDonation?: any) {
   await connectToDatabase();
 
-  const donation = await Donation.findOne({ razorpayOrderId }).lean() as any;
+  const donation = existingDonation || await Donation.findOne({ razorpayOrderId }).lean() as any;
   if (!donation) {
     return null;
   }
@@ -70,12 +70,7 @@ export async function ensureReceiptIfAllowed(razorpayOrderId: string) {
     return updated.donationId as string;
   }
 
-  const refreshed = await Donation.findOne({ razorpayOrderId }).lean() as any;
-  if (refreshed?.receiptNumber && refreshed.status !== "VERIFIED") {
-    await Donation.updateOne({ donationId: refreshed.donationId }, { $set: { status: "VERIFIED" } });
-  }
-
-  return (refreshed?.donationId || donation.donationId) as string;
+  return donation.donationId as string;
 }
 
 type SuccessInput = {
@@ -107,7 +102,7 @@ export async function processRazorpaySuccess(input: SuccessInput) {
       await Donation.updateOne({ razorpayOrderId: input.razorpayOrderId }, { $set: changes });
     }
     
-    const donationId = await ensureReceiptIfAllowed(input.razorpayOrderId);
+    const donationId = await ensureReceiptIfAllowed(input.razorpayOrderId, { ...existing, ...changes });
     return { ...existing, ...changes, donationId: donationId || existing.donationId };
   }
 
@@ -155,7 +150,7 @@ export async function processRazorpaySuccess(input: SuccessInput) {
     return null;
   }
 
-  const donationId = await ensureReceiptIfAllowed(input.razorpayOrderId);
+  const donationId = await ensureReceiptIfAllowed(input.razorpayOrderId, updated);
   return { ...updated, donationId: donationId || updated.donationId };
 }
 

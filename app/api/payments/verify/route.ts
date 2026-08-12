@@ -48,7 +48,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const donation = await donationRepository.findByRazorpayOrderId(razorpay_order_id);
+    const [donation, paymentObj] = await Promise.all([
+      donationRepository.findByRazorpayOrderId(razorpay_order_id),
+      RazorpayService.fetchPayment(razorpay_payment_id).catch(() => null)
+    ]);
+
     if (!donation) {
       return NextResponse.json(
         { success: false, error: "Donation not found for this order" },
@@ -56,13 +60,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let captured = false;
-    try {
-      const payment = await RazorpayService.fetchPayment(razorpay_payment_id) as any;
-      captured = payment?.status === "captured";
-    } catch {
-      captured = false;
-    }
+    const captured = (paymentObj as any)?.status === "captured";
 
     const updated = await processRazorpaySuccess({
       razorpayOrderId: razorpay_order_id,
