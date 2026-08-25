@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, AlertTriangle, XCircle, Info } from "lucide-react";
+import { ShieldCheck, AlertTriangle, XCircle } from "lucide-react";
 import { loadRazorpaySDK } from "@/lib/payment/razorpayLoader";
 
 export const dynamic = "force-dynamic";
@@ -59,12 +59,17 @@ export default function PayPage({ searchParams }: Props) {
     initiatedRef.current = true;
 
     try {
-      console.log(`[PayPage] Step 1: Creating order for donationId: ${id}`);
-      const response = await fetch("/api/payments/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ donationId: id }),
-      });
+      // Start both in parallel: the create-order backend call and the Razorpay SDK download
+      // are completely independent. Running them concurrently saves ~500ms–2s of CDN latency.
+      console.log(`[PayPage] Fetching order + loading Razorpay SDK in parallel for donationId: ${id}`);
+      const [response, scriptResult] = await Promise.all([
+        fetch("/api/payments/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ donationId: id }),
+        }),
+        loadRazorpaySDK(),
+      ]);
 
       const data = await response.json();
       console.log("[PayPage] Create-order response:", data);
@@ -77,8 +82,6 @@ export default function PayPage({ searchParams }: Props) {
         return;
       }
 
-      console.log("[PayPage] Step 2: Loading Razorpay SDK...");
-      const scriptResult = await loadRazorpaySDK();
       if (!scriptResult.success) {
         console.error("[PayPage] Razorpay SDK load failed:", scriptResult.error);
         setError(scriptResult.error || "Failed to load payment gateway.");
@@ -375,14 +378,6 @@ export default function PayPage({ searchParams }: Props) {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Info Note */}
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50/60 border border-blue-100">
-                <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                <p className="text-xs text-blue-700 leading-relaxed text-left">
-                  To ensure the temple receives the full seva amount, payment processing charges are borne by the devotee.
-                </p>
               </div>
 
               {/* Proceed Button */}

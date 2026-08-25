@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +17,46 @@ type Props = {
   sevas: SevaPlain[];
 };
 
+const SESSION_KEY = "guruseva_donation_form";
+const SESSION_DONATION_KEY = "guruseva_in_progress_donation";
+// Discard saved form data older than 2 hours
+const MAX_SESSION_AGE_MS = 2 * 60 * 60 * 1000;
+
+function loadFormSession(): Partial<DonationInput> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const { data, savedAt } = JSON.parse(raw);
+    if (Date.now() - savedAt > MAX_SESSION_AGE_MS) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return data as Partial<DonationInput>;
+  } catch {
+    return null;
+  }
+}
+
+function saveFormSession(values: Partial<DonationInput>) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ data: values, savedAt: Date.now() }));
+  } catch {
+    // sessionStorage not available (e.g. private mode with strict settings) — ignore silently
+  }
+}
+
+function clearFormSession() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_DONATION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function DonationForm({ sevas }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,7 +64,23 @@ export function DonationForm({ sevas }: Props) {
   
   const [error, setError] = useState("");
   const sevasById = useMemo(() => new Map(sevas.map((seva) => [seva._id, seva])), [sevas]);
-  
+
+  // Stable defaultValues — created once per component instance (keyed to preselectedSevaId).
+  // Must NOT be recreated on every render, because react-hook-form re-applies defaultValues
+  // when the object reference changes, wiping user-entered data.
+  const defaultValues = useMemo<z.input<typeof donationSchema>>(() => {
+    const saved = loadFormSession();
+    return {
+      name: saved?.name ?? "",
+      gothra: saved?.gothra ?? "",
+      mobile: saved?.mobile ?? "",
+      email: saved?.email ?? "",
+      sevaId: saved?.sevaId ?? preselectedSevaId ?? "",
+      amount: saved?.amount ?? 0,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — compute once on mount from sessionStorage
+
   const {
     register,
     handleSubmit,
@@ -33,7 +89,7 @@ export function DonationForm({ sevas }: Props) {
     formState: { errors, isSubmitting }
   } = useForm<z.input<typeof donationSchema>, unknown, DonationInput>({
     resolver: zodResolver(donationSchema),
-    defaultValues: { name: "", gothra: "", mobile: "", email: "", sevaId: preselectedSevaId || "", amount: 0 }
+    defaultValues,
   });
 
   const sevaId = watch("sevaId");
@@ -41,17 +97,69 @@ export function DonationForm({ sevas }: Props) {
   
   const isFixedAmount = selectedSeva?.pricingMode === "fixed";
 
+  // Persist form values to sessionStorage on every change.
+  // This ensures values survive React component remounts, Strict Mode double-invocation,
+  // and navigation events that may cause the component to unmount and remount.
+  const watchedValues = watch();
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (selectedSeva) {
-      const amount = selectedSeva.pricingMode === "fixed" 
+    // Debounce to avoid writing to sessionStorage on every keystroke
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveFormSession(watchedValues);
+    }, 300);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(watchedValues)]);
+
+  // When selected seva changes, update the amount field.
+  // Guard: only overwrite amount if user hasn't already entered a custom amount for this seva.
+  const amountSetForSevaRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedSeva && amountSetForSevaRef.current !== sevaId) {
+      amountSetForSevaRef.current = sevaId;
+      const amount = selectedSeva.pricingMode === "fixed"
         ? (selectedSeva.fixedAmount || selectedSeva.suggestedAmount)
         : (selectedSeva.defaultAmount || selectedSeva.suggestedAmount);
-      setValue("amount", amount, { shouldValidate: true });
+      // Only set the amount if the current value is 0 (unset) or we're changing sevas
+      const currentAmount = watchedValues.amount;
+      if (currentAmount === 0 || currentAmount === undefined) {
+        setValue("amount", amount, { shouldValidate: true });
+      }
     }
-  }, [selectedSeva, setValue]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sevaId, selectedSeva, setValue]);
 
   async function onSubmit(values: DonationInput) {
     setError("");
+
+    // Check if there's an in-progress donation for this exact seva+amount combination.
+    // This prevents duplicate donation records when the user navigates back and resubmits.
+    try {
+      const inProgressRaw = sessionStorage.getItem(SESSION_DONATION_KEY);
+      if (inProgressRaw) {
+        const { donationId: existingId, sevaId: savedSevaId, amount: savedAmount } = JSON.parse(inProgressRaw);
+        if (existingId && savedSevaId === values.sevaId && savedAmount === values.amount) {
+          // Verify the existing donation is still awaiting payment
+          const checkRes = await fetch(`/api/payments/status?id=${encodeURIComponent(existingId)}`);
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.paymentStatus === "PENDING" || checkData.paymentStatus === "INITIATED") {
+              // Reuse the existing in-progress donation — do not create a duplicate
+              router.push(`/donate/pay?id=${encodeURIComponent(existingId)}`);
+              return;
+            }
+          }
+          // If status check fails or donation is no longer pending, fall through to create new
+          sessionStorage.removeItem(SESSION_DONATION_KEY);
+        }
+      }
+    } catch {
+      // sessionStorage or fetch error — proceed normally
+    }
+
     const response = await fetch("/api/donations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -64,8 +172,25 @@ export function DonationForm({ sevas }: Props) {
       return;
     }
 
+    // Store the in-progress donationId so we can reuse it on duplicate submission
+    try {
+      sessionStorage.setItem(SESSION_DONATION_KEY, JSON.stringify({
+        donationId: data.donation.donationId,
+        sevaId: values.sevaId,
+        amount: values.amount,
+      }));
+    } catch {
+      // ignore
+    }
+
+    // Clear form session only after the donation record is successfully created and we navigate away.
+    // We intentionally keep form data alive until this point so the user can see their values
+    // if the API call fails and they need to retry.
+    clearFormSession();
+
     router.push(`/donate/pay?id=${encodeURIComponent(data.donation.donationId)}`);
   }
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

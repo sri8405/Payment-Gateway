@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 import { NextResponse, type NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { RazorpayService } from "@/lib/payment/RazorpayService";
-import { calculatePaymentFees } from "@/lib/payment/paymentFees";
 import { donationRepository } from "@/lib/db/repositories/donationRepository";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { getIdempotencyKey, checkIdempotency, storeIdempotency } from "@/lib/utils/idempotency";
@@ -61,19 +60,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate payment processing fees (server-side only)
-    const fees = calculatePaymentFees(donation.amount);
+    // Devotee pays EXACTLY the seva amount — no gateway fee or GST surcharge.
+    // Razorpay's own merchant fees are absorbed by the temple and are NOT passed to devotees.
+    const amountPaise = Math.round(donation.amount * 100);
 
-    if (fees.totalPayablePaise < 100) {
+    if (amountPaise < 100) {
       return NextResponse.json(
         { success: false, error: "Minimum payment amount is Rs 1 (100 paise)" },
         { status: 400 }
       );
     }
 
-    // Create Razorpay order with TOTAL PAYABLE (seva + processing charges)
+    // Create Razorpay order with the exact seva amount (integer paise, no surcharges)
     const order = await RazorpayService.createOrder(
-      fees.totalPayablePaise,
+      amountPaise,
       "INR",
       donation.donationId
     );
@@ -93,10 +93,11 @@ export async function POST(req: NextRequest) {
           razorpayOrderId: order.orderId,
           paymentStatus: "INITIATED",
           paymentGateway: "Razorpay",
-          gatewayFee: fees.gatewayFee,
-          gatewayGST: fees.gatewayGST,
-          processingCharge: fees.processingCharge,
-          totalPaid: fees.totalPayable,
+          // No fees are charged to the devotee
+          gatewayFee: 0,
+          gatewayGST: 0,
+          processingCharge: 0,
+          totalPaid: donation.amount,
         },
       },
       { new: true }
@@ -110,7 +111,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (process.env.NODE_ENV !== "production") {
-      console.info("Razorpay order created", { donationId: donation.donationId });
+      console.info("Razorpay order created", {
+        donationId: donation.donationId,
+        amountRupees: donation.amount,
+        amountPaise,
+      });
     }
 
     const successPayload = {
@@ -128,13 +133,13 @@ export async function POST(req: NextRequest) {
       notes: {
         sevaName: donation.sevaName,
       },
-      // Fee breakdown for frontend display
+      // Fee breakdown for frontend display — no surcharges applied
       fees: {
-        sevaAmount: fees.sevaAmount,
-        gatewayFee: fees.gatewayFee,
-        gatewayGST: fees.gatewayGST,
-        processingCharge: fees.processingCharge,
-        totalPayable: fees.totalPayable,
+        sevaAmount: donation.amount,
+        gatewayFee: 0,
+        gatewayGST: 0,
+        processingCharge: 0,
+        totalPayable: donation.amount,
       },
     };
 
